@@ -1,10 +1,10 @@
 ircmarkers (0.5) unstable; urgency=low
 
   * Fix several parsing bugs.
-  * Links take color as option.
-  * Computes rough bounding box.
+  * Links take color as option, support link_color none.
+  * Computes rough bounding box (requested by Uli Martens).
 
- -- Christoph Berg <cb@df7cb.de>  Fri, 17 Sep 2004 00:01:31 +0200
+ -- Christoph Berg <cb@df7cb.de>  Sat, 18 Sep 2004 13:34:10 +0200
 
 ircmarkers (0.4) unstable; urgency=low
 

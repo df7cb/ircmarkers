@@ -79,7 +79,7 @@ sub parse_options {
 	while($opt ne '') { # loop over options
 		$opt =~ s/^\s+|#.*//g;
 		last unless $opt ne '';
-		if($marker and $opt =~ s/^gpg[ :](?:0x)?([0-9a-fx]+)//i) { # ':' is deprecated old syntax
+		if($marker and $opt =~ s/^gpg[ :](?:0x)?([0-9a-f]{16})//i) { # ':' is deprecated old syntax
 			my $k = uc $1;
 			if($config->{gpg}->{$k} and $config->{gpg}->{$k} ne $marker) {
 				warn "$config->{file}.$.: key $k already associated with $config->{gpg}->{$k}, overwriting with $marker\n";
@@ -111,6 +111,8 @@ sub parse_options {
 			$item->{ptsize} = $1;
 		} elsif($opt =~ s/^(?:link|sign2)_colou?r (\d+) (\d+) (\d+)//) {
 			$item->{link_color} = [$1, $2, $3];
+		} elsif($opt =~ s/^(?:link|sign2)_colou?r (no(ne?)|off)//) {
+			delete $item->{link_color};
 		# error
 		} else {
 			my $loc = $config->{file} ? "$config->{file}:$." : "-o";
@@ -167,7 +169,7 @@ sub parse {
 		$config->{link_outside} = 1;
 	} elsif(/^link_outside (off|no)/) {
 		$config->{link_outside} = 0;
-	} elsif(/^sign1_colou?r (no|off|none)$/) {
+	} elsif(/^sign1_colou?r (no(ne)?|off)$/) {
 		delete $config->{sign1_color};
 	} elsif(/^sign1_colou?r (\d+) (\d+) (\d+)$/) {
 		$config->{sign1_color} = [$1, $2, $3];
@@ -207,6 +209,8 @@ sub parse {
 		$config->default_options($config->{yxlabels}->[$labelnr]);
 		$config->parse_options($config->{yxlabels}->[$labelnr], undef, $opt);
 		$labelnr++;
+	} elsif(/^polygon ([+-]?\d+) ([+-]?\d+) "([^"]+)"(.*)/) {
+		# TODO
 	# everything else is a globally applied local option or a syntax error
 	} else {
 		$config->parse_options($config, undef, $_);

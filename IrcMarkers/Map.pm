@@ -143,6 +143,30 @@ sub new {
 	bless $config, $class;
 }
 
+sub coord2pixel {
+	my $config = shift;
+	my ($lat, $lon) = @_;
+
+	my($x, $y, $X0);
+	my $vis = 1;
+
+	if ($config->{projection} eq 'mercator') {
+		# pixel values, sprintf rounds to nearest
+		$x = sprintf("%u", ($lon - $config->{west}) / $config->{xres});
+		$y = sprintf("%u", ($config->{north} - $lat) / $config->{yres});
+		$vis = 0 if ($lon > $config->{east} or $lon < $config->{west} or $lat > $config->{north} or $lat < $config->{south});
+	} elsif ($config->{projection} eq 'sinusoidal') {
+		# absolute X
+		$X0 = ($lon - $config->{center_lon}) * cos($lat * $degtorad);
+		# pixel values
+		$x = sprintf("%u", ($X0 - $config->{Xleft}) / $config->{xres});
+		$y = sprintf("%u", ($config->{north} - $lat) / $config->{yres});
+		$vis = 0 if ($X0 < $config->{Xleft} or $X0 > $config->{Xright} or $lat > $config->{north} or $lat < $config->{south});
+	}
+
+	return ($x, $y, $vis);
+}
+
 sub add {
 	my($config, $marker) = @_;
 
@@ -160,30 +184,10 @@ sub add {
 		fontsize => $config->{markers}->{$marker}->{ptsize}, # Font size, unity is "points"
 	};
 
-	my($x, $y, $X0);
-	if ($config->{projection} eq 'mercator') {
-		# pixel values, sprintf rounds to nearest
-		$x = sprintf("%u", ($config->{markers}->{$marker}->{lon} - $config->{west}) / $config->{xres});
-		$y = sprintf("%u", ($config->{north} - $config->{markers}->{$marker}->{lat}) / $config->{yres});
-	} elsif ($config->{projection} eq 'sinusoidal') {
-		# absolute X
-		$X0 = ($config->{markers}->{$marker}->{lon} - $config->{center_lon}) * cos($config->{markers}->{$marker}->{lat} * $degtorad);
-		# pixel values
-		$x = sprintf("%u", ($X0 - $config->{Xleft}) / $config->{xres});
-		$y = sprintf("%u", ($config->{north} - $config->{markers}->{$marker}->{lat}) / $config->{yres});
-	}
-
+	my($x, $y, $vis) = $config->coord2pixel($config->{markers}->{$marker}->{lat}, $config->{markers}->{$marker}->{lon});
 	$config->{markers}->{$marker}->{x} = $x;
 	$config->{markers}->{$marker}->{y} = $y;
-
-	if ($config->{projection} eq 'mercator') { # marker is out of bounds
-		if(($config->{markers}->{$marker}->{lon} > $config->{east} or $config->{markers}->{$marker}->{lon} < $config->{west} or $config->{markers}->{$marker}->{lat} > $config->{north} or $config->{markers}->{$marker}->{lat} < $config->{south})) {
-			return;
-		}
-	} elsif ($config->{projection} eq 'sinusoidal') {
-		return if ($X0 < $config->{Xleft} or $X0 > $config->{Xright} or $config->{markers}->{$marker}->{lat} > $config->{north} or $config->{markers}->{$marker}->{lat} < $config->{south});
-	}
-
+	return unless $vis;
 	$config->{markers}->{$marker}->{visible} = 1;
 
 	print "$label->{text} at $config->{markers}->{$marker}->{lon}, $config->{markers}->{$marker}->{lat} ($x, $y)\n" unless $config->{quiet};

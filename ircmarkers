@@ -35,7 +35,7 @@ use IrcMarkers::Map;
 # Debug
 #use Data::Dumper;
 
-my $VERSION = "v0.3";
+my $VERSION = "v0.5";
 
 sub VERSION_MESSAGE {
 	print "IrcMarkers $VERSION (C) 2004 Christoph Berg <cb\@df7cb.de>, GNU GPL.\n";
@@ -90,7 +90,7 @@ foreach my $marker (keys %{$config->{markers}}) {
 	$config->compute_boundingbox($config->{markers}->{$marker});
 }
 
-if($config->{gpg}) {
+if($config->{link_color} and $config->{gpg}) {
 	$config->get_gpg_links();
 }
 
@@ -286,9 +286,9 @@ Dots are filled (dot) or hollow (circle). Default is dot.
 
 Draw a link between I<marker1> and I<marker2>.
 
-=item link_color|sign2_color I<R G B>
+=item link_color|sign2_color I<R G B>|none
 
-Color of the lines drawn between the markers. Default is link_color 255 255 0.
+Color of the lines drawn between the markers. Default is link_color 255 128 0.
 
 =back
 
