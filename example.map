@@ -1,10 +1,5 @@
 # example config file for IrcMarkers, process with "ircmarkers example.map"
 
-# some PGP keys; uncomment the following lines to put a link on the map.
-# use "gpg --recv <keyid>" to fetch the keys from a keyserver
-#"Myon" gpg B46B923B6D8ABE71
-#"formorer" gpg D35BBC99BC7D020A
-
 # input/output filename
 read world.jpg
 write example.jpg
@@ -23,8 +18,13 @@ label_color 0 255 0
 
 # some markers and labels to put on the map
 49.2532 7.0425 "Myon"
-53.517 8.133 "formorer"
+50.8574 6.4585 "formorer"
 label 15 5 "#debian.de map"
+
+# some PGP keys; uncomment the following lines to put a link on the map.
+# use "gpg --recv <keyid>" to fetch the keys from a keyserver
+#"Myon" gpg B46B923B6D8ABE71
+#"formorer" gpg D35BBC99BC7D020A
 
 # remove the first '#' from the following line to include another config file
 ##include "other_coordinates.map"

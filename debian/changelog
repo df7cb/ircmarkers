@@ -1,3 +1,11 @@
+ircmarkers (0.5) unstable; urgency=low
+
+  * Fix several parsing bugs.
+  * Links take color as option.
+  * Computes rough bounding box.
+
+ -- Christoph Berg <cb@df7cb.de>  Fri, 17 Sep 2004 00:01:31 +0200
+
 ircmarkers (0.4) unstable; urgency=low
 
   * Allow arbitrary whitespace in config (requested by Uli Martens).

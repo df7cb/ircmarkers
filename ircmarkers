@@ -87,29 +87,50 @@ my $map = IrcMarkers::Map->new($config);
 
 foreach my $marker (keys %{$config->{markers}}) {
 	$map->add($marker) if $config->{markers}->{$marker}->{lat};
+	$config->compute_boundingbox($config->{markers}->{$marker});
 }
 
 if($config->{gpg}) {
 	$config->get_gpg_links();
 }
 
-foreach my $link (keys %{$config->{links}}) {
-	next unless $config->{markers}->{$link};
-	foreach my $target (keys %{$config->{links}->{$link}}) {
-		next unless $config->{markers}->{$target};
-		print "$link <-> $target\n" unless $config->{quiet};
-		$map->link($link, $target, $config->{link_color});
+$config->set_line_style();
+if($config->{links}) {
+	foreach my $nr (0 .. @{$config->{links}} - 1) {
+		my $link = $config->{links}->[$nr];
+		print "$link->{src} <-> $link->{dst}\n" unless $config->{quiet};
+		#$map->link($link->{src}, $link->{dst}, $link->{link_color});
+		$link->{x0} = $config->{markers}->{$link->{src}}->{x};
+		$link->{y0} = $config->{markers}->{$link->{src}}->{y};
+		$link->{x1} = $config->{markers}->{$link->{dst}}->{x};
+		$link->{y1} = $config->{markers}->{$link->{dst}}->{y};
+		$config->draw_line_new($link);
 	}
 }
+#foreach my $link (keys %{$config->{links}}) {
+#	next unless $config->{markers}->{$link};
+#	foreach my $target (keys %{$config->{links}->{$link}}) {
+#		next unless $config->{markers}->{$target};
+#		print "$link <-> $target\n" unless $config->{quiet};
+#		$map->link($link, $target, $config->{link_color});
+#	}
+#}
 
 $map->compute_overlap() if($config->{overlap_correction});
 $map->draw();
 if($config->{yxlabels}) {
 	foreach my $nr (0 .. @{$config->{yxlabels}} - 1) {
 		$map->draw_label_new($config->{yxlabels}->[$nr]);
+		$config->compute_boundingbox($config->{yxlabels}->[$nr]);
 	}
 }
 $map->write($config->{write});
+
+if(not $config->{quiet} and $config->{min_x}) {
+	print "Area used by markers is (approximately): ".
+		"y: $config->{min_y}..$config->{max_y} ".
+		"x: $config->{min_x}..$config->{max_x}\n";
+}
 
 __END__
 
@@ -177,7 +198,7 @@ the config file (i.e. it will not override commands there).
 
 The following directives can be used in the config file:
 
-=head2 Marker Definitions
+=head2 Marker and Label Definitions
 
 =over
 
@@ -194,10 +215,6 @@ The following is a marker for Myon in Germany:
 
 B<49.2532 7.0425 "Myon">
 
-=item "I<marker1>" -> "I<marker2>"
-
-Draw a link between I<marker1> and I<marker2>.
-
 =item label I<y> I<x> "I<text>"
 
 =item label I<y> I<x> "I<text>" I<options>
@@ -208,7 +225,7 @@ Using negative values will count from the bottom/right border in X11's
 
 =back
 
-=head2 Marker Options
+=head2 Marker and Label Options
 
 The following options can be specified per marker or globally (except gpg).
 Global options set defaults for all following marker definitions.
@@ -259,6 +276,22 @@ Dots are filled (dot) or hollow (circle). Default is dot.
 
 =back
 
+=head2 Link Definition and Options
+
+=over
+
+=item "I<marker1>" <-> "I<marker2>"
+
+=item "I<marker1>" <-> "I<marker2>" I<options>
+
+Draw a link between I<marker1> and I<marker2>.
+
+=item link_color|sign2_color I<R G B>
+
+Color of the lines drawn between the markers. Default is link_color 255 255 0.
+
+=back
+
 =head2 Global Options
 
 =over
@@ -306,10 +339,6 @@ There is no default for center_lon.
 Whether to draw lines to markers that are not visible on the map. Default is
 link_outside off.
 
-=item link_color|sign2_color I<R G B>
-
-Color of the lines drawn between the markers. Default is link_color 255 255 0.
-
 =item sign1_color I<R G B>|none
 
 Color of the lines drawn for uni-directional GnuPG/PGP signatures. Default is
@@ -351,7 +380,7 @@ B<ircmarkers -x -10.4/29.4 -y 32/72 coordinates.txt europe.jpg mutt-eu.jpg>
 	lon 4/20
 	label_color 0 255 0
 	49.2532 7.0425 "Myon"
-	53.517 8.133 "formorer" label_color 255 255 0
+	50.8574 6.4585 "formorer" label_color 255 255 0
 	#include "debian.de.txt"
 	#include "debian.de.keys"
 

@@ -46,6 +46,7 @@ sub new {
 		link_outside => 0,
 		link_color => [255, 128, 0],
 		#sign1_color => [100, 100, 100],
+		link_style => 'solid',
 		font => '/usr/share/ircmarkers/fixed_01.ttf',
 		ptsize => 6,
 		quiet => 0,
@@ -66,13 +67,14 @@ sub default_options { # this will be obsolete if all items are deOOified
 	$item->{label_border} ||= $config->{label_border};
 	$item->{font} ||= $config->{font};
 	$item->{ptsize} ||= $config->{ptsize};
+	$item->{link_color} ||= $config->{link_color}; # only for links
 }
 
 sub parse_options {
 	my $config = shift;
 	my $item = shift;
 	die "huh?" unless ref $item;
-	my $marker = shift; # defined for markers, undef for yxlabels
+	my $marker = shift; # defined for markers, undef for yxlabels/links
 	my $opt = shift;
 	while($opt ne '') { # loop over options
 		$opt =~ s/^\s+|#.*//g;
@@ -107,6 +109,8 @@ sub parse_options {
 			$item->{font} =~ s!^~/!$ENV{HOME}/!;
 		} elsif($opt =~ s/^ptsize (\d+)//) {
 			$item->{ptsize} = $1;
+		} elsif($opt =~ s/^(?:link|sign2)_colou?r (\d+) (\d+) (\d+)//) {
+			$item->{link_color} = [$1, $2, $3];
 		# error
 		} else {
 			my $loc = $config->{file} ? "$config->{file}:$." : "-o";
@@ -117,6 +121,7 @@ sub parse_options {
 }
 
 my $labelnr = 0;
+my $linknr = 0;
 sub parse {
 	my $config = shift;
 	$_ = shift;
@@ -128,7 +133,8 @@ sub parse {
 	}
 	return if /^\s*#/;
 
-	s/^([^"]+)|([^"]+)$/despace($1)/e; # compress space outside of quotes
+	s/^([^"]+)/despace($1)/e; # compress space outside of quotes
+	s/([^"]+)$/despace($1)/e;
 
 	# global options
 	if(/^read (.+)/) {
@@ -161,8 +167,6 @@ sub parse {
 		$config->{link_outside} = 1;
 	} elsif(/^link_outside (off|no)/) {
 		$config->{link_outside} = 0;
-	} elsif(/^(?:link|sign2)_colou?r (\d+) (\d+) (\d+)$/) {
-		$config->{link_color} = [$1, $2, $3];
 	} elsif(/^sign1_colou?r (no|off|none)$/) {
 		delete $config->{sign1_color};
 	} elsif(/^sign1_colou?r (\d+) (\d+) (\d+)$/) {
@@ -177,6 +181,13 @@ sub parse {
 		$config->{quiet} = 1;
 	} elsif(/^quiet (off|no)/) {
 		$config->{quiet} = 0;
+	# link
+	} elsif(/"([^"]*)"\s+<?->\s+"([^"]+)"(.*)/) { # -> is old syntax
+		$config->{links}->[$linknr] = { src => $1, dst => $2 };
+		my $opt = $3;
+		$config->default_options($config->{links}->[$linknr]);
+		$config->parse_options($config->{links}->[$linknr], undef, $opt);
+		$linknr++;
 	# marker definitions
 	} elsif(/^([\d.,-]+) ([\d.,-]+) "([^"]+)"(.*)/) { # xplanet marker file format
 		my ($lat, $lon, $marker, $opt) = ($1, $2, $3, $4);
@@ -190,8 +201,6 @@ sub parse {
 		my ($marker, $opt) = ($1, $2);
 		$config->{markers}->{$marker} ||= {};
 		$config->parse_options($config->{markers}->{$marker}, $marker, $opt);
-	} elsif(/"([^"]*)"\s+->\s+"([^"]+)"/) {
-		$config->{links}->{$1}->{$2} = 1;
 	} elsif(/^label ([+-]?\d+) ([+-]?\d+) "([^"]+)"(.*)/) {
 		$config->{yxlabels}->[$labelnr] = { y => $1, x => $2, text => $3 };
 		my $opt = $4;

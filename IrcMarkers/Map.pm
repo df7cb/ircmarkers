@@ -207,12 +207,12 @@ sub link {
 }
 
 sub compute_overlap {
-	my($self) = @_;
+	my($config) = @_;
 
 	# We execute the program in order to be able to read its output
 	# 3 is the offset: space between dot and text
 
-	my $command = $self->{overlap} . " " . (scalar @{$self->{LABELS}}) . " " . $self->{w} . " " . $self->{h} . " 3";
+	my $command = $config->{overlap} . " " . (scalar @{$config->{LABELS}}) . " " . $config->{w} . " " . $config->{h} . " 3";
 
 	my($rdrfh, $wtrfh);
 	my $pid = open2(\*R, \*W, $command) or die "open2: $!";
@@ -237,27 +237,25 @@ sub compute_overlap {
 					$ref->[2] - $ref->[0], # width
 					$ref->[1] - $ref->[5]  # height
 		);
-	} @{$self->{LABELS}};
+	} @{$config->{LABELS}};
 	close(W);
 
 	# Analyse the output
 	while (<R>) {
 		/(\d+)\t([+-]\d+)\t([+-]\d+)/;
-		$self->{LABELS}->[$1]->{LABELX} = $2;
-		$self->{LABELS}->[$1]->{LABELY} = $3; #While imlib uses top, gd uses bottom
+		$config->{LABELS}->[$1]->{LABELX} = $2;
+		$config->{LABELS}->[$1]->{LABELY} = $3; #While imlib uses top, gd uses bottom
 	}
 	# Clean all this shit
 	close(R);
 }
 
 sub draw {
-	my $self = shift;
-
-	# In the end, drawing the file
-	my $image = $self->{IMAGE};
-	map { $_->draw_line($image); } @{$self->{LINKS}};
-	map { $_->draw_dot($image); } @{$self->{LABELS}};
-	map { $_->draw_label($image) } @{$self->{LABELS}};
+	my $config = shift;
+	my $image = $config->{IMAGE};
+	map { $_->draw_line($image); } @{$config->{LINKS}};
+	map { $_->draw_dot($image); } @{$config->{LABELS}};
+	map { $_->draw_label($image) } @{$config->{LABELS}};
 }
 
 sub draw_label_new {
@@ -293,9 +291,27 @@ sub draw_label_new {
 	$image->stringFT($fontcolor, $font, $fontsize, 0, $x, $y, $text);
 }
 
+sub set_line_style {
+	my $config = shift;
+
+	for(my $i = 25; $i >= 0; $i--) {
+		push @{$config->{line_style}}, $config->{IMAGE}->colorResolve(10*$i, 10*$i, 10*$i);
+	}
+	$config->{IMAGE}->setStyle(@{$config->{line_style}});
+}
+
+sub draw_line_new {
+	my ($config, $item) = @_;
+	my $image = $config->{IMAGE};
+
+	my $color = $image->colorResolve(@{$item->{link_color} || $config->{link_color}});
+	$image->line($item->{x0}, $item->{y0}, $item->{x1}, $item->{y1}, $color);
+	#$image->line($item->{x0}, $item->{y0}, $item->{x1}, $item->{y1}, gdStyled);
+}
+
 sub write {
-	my($self, $file) = @_;
-	my $image = $self->{IMAGE};
+	my($config, $file) = @_;
+	my $image = $config->{IMAGE};
 
 	$file =~ /\.([^.]+)$/;
 	my $format = lc $1;
@@ -320,6 +336,15 @@ sub write {
 	binmode SVG;
 	print SVG $data;
 	close SVG;
+}
+
+sub compute_boundingbox { # compute bounding box
+	my $config = shift;
+	my $item = shift;
+	$config->{min_x} = $item->{x} if not defined $config->{min_x} or $item->{x} < $config->{min_x};
+	$config->{max_x} = $item->{x} if not defined $config->{max_x} or $item->{x} > $config->{max_x};
+	$config->{min_y} = $item->{y} if not defined $config->{min_y} or $item->{y} < $config->{min_y};
+	$config->{max_y} = $item->{y} if not defined $config->{max_y} or $item->{y} > $config->{max_y};
 }
 
 # transitional stub
