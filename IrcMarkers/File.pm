@@ -284,8 +284,8 @@ sub get_gpg_links {
 				$color = $config->{sign1_color} or next; # don't draw unidirectional links
 				$arrow = "-->";
 			}
-			next unless $config->{markers}->{$source}->{lat};
-			next unless $config->{markers}->{$target}->{lat};
+			next if not defined $config->{markers}->{$source}->{lat};
+			next if not defined $config->{markers}->{$target}->{lat};
 			$config->link($source, $target, $color);
 			print "$source $arrow $target\n" unless $config->{quiet};
 		}

@@ -35,7 +35,7 @@ use IrcMarkers::Map;
 # Debug
 #use Data::Dumper;
 
-my $VERSION = "v0.5";
+my $VERSION = "0.6";
 
 sub VERSION_MESSAGE {
 	print "IrcMarkers $VERSION (C) 2004 Christoph Berg <cb\@df7cb.de>, GNU GPL.\n";
@@ -87,7 +87,7 @@ my $map = IrcMarkers::Map->new($config);
 
 foreach my $marker (keys %{$config->{markers}}) {
 	my $item = $config->{markers}->{$marker};
-	$map->add($marker) if $item->{lat};
+	$map->add($marker) if defined $item->{lat};
 	$config->compute_boundingbox($item) if $item->{visible};
 }
 
@@ -129,7 +129,7 @@ if($config->{yxlabels}) {
 }
 $map->write($config->{write});
 
-if(not $config->{quiet} and $config->{min_x}) {
+if(not $config->{quiet} and defined $config->{min_x}) {
 	print "Area used by markers is (approximately): ".
 		"y: $config->{min_y}..$config->{max_y} ".
 		"x: $config->{min_x}..$config->{max_x}\n";

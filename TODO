@@ -8,7 +8,6 @@
 
 * draw links per marker, not per key
 * adapt pisg's addalias.pl
-* labels with negative coordinates like -geometry
-  use upper left corner for positive values
 * view_* in pixels
 * coordinates wraparound (i.e. not necessary to replace -20 by 340)
+* use all labels for bounding box computing
