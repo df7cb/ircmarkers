@@ -1,0 +1,7 @@
+Debian README for ircmarkers
+============================
+
+This package provides a TrueType font in /usr/share/ircmarkers/fixed_01.ttf.
+Many other fonts are available in the ttf-* packages.
+
+ -- Christoph Berg <cb@df7cb.de> Wed Sep  1 20:48:31 CEST 2004
