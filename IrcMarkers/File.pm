@@ -47,6 +47,12 @@ sub new {
 	bless $config;
 }
 
+sub default_options {
+	my $config = shift;
+	my $item = shift;
+	$item->{label_color} ||= $config->{label_color};
+}
+
 sub parse_options {
 	my $config = shift;
 	my $marker = shift;
@@ -54,13 +60,15 @@ sub parse_options {
 	while($opt) { # loop over options
 		$opt =~ s/^\s+|#.*//g;
 		last unless $opt;
-		if($opt =~ s/gpg:([0-9a-fx]+)//i) {
+		if($opt =~ s/^gpg[ :](?:0x)?([0-9a-fx]+)//i) { # ':' is deprecated old syntax
 			my $k = uc $1;
 			if($config->{gpg}->{$k} and $config->{gpg}->{$k} ne $marker) {
 				warn "$config->{file}.$.: key $k already associated with $config->{gpg}->{$k}, overwriting with $marker\n";
 			}
 			$config->{gpg}->{$k} = $marker;
 			$config->{gpg_not_found}->{$k} = $marker;
+		} elsif($opt =~ s/^label_colou?r (\d+) (\d+) (\d+)//) {
+			$config->{markers}->{$marker}->{label_color} = [$1, $2, $3];
 		} else {
 			warn "$config->{file}.$.: unknown option: $opt\n";
 			last;
@@ -151,12 +159,16 @@ sub read {
 			$lon =~ s/,/./;
 			$config->{markers}->{$marker}->{lat} = $lat;
 			$config->{markers}->{$marker}->{lon} = $lon;
+			$config->default_options($config->{markers}->{$marker});
 			$config->parse_options($marker, $opt);
 		} elsif(/^"([^"]*)"(.*)/) { # marker with options
 			my ($marker, $opt) = ($1, $2);
 			$config->parse_options($marker, $opt);
 		} elsif(/"([^"]*)" -> "([^"]+)"/) {
 			$config->{links}->{$1}->{$2} = 1;
+		} elsif(/^label (\d+) (\d+) "([^"]+)"/) {
+			my $nr = push @{$config->{yxlabels}}, { y => $1, x => $2, text => $3 } - 1;
+			$config->default_options($config->{yxlabels}->[$nr]);
 		} else {
 			warn "$file.$.: unknown format: $_\n";
 		}

@@ -21,5 +21,10 @@ install: overlap ircmarkers.1
 	$(INSTALL_PROGRAMM) -D -m 664 fixed_01.ttf $(DESTDIR)/usr/share/ircmarkers/fixed_01.ttf
 	$(INSTALL_PROGRAMM) -D -m 664 ircmarkers.1 $(DESTDIR)/usr/share/man/man1/ircmarkers.1
 
+tags:
+	ctags ircmarkers IrcMarkers/*.pm
+
 clean:
-	rm -f overlap ircmarkers.1 ircmarkers.html tags pod2htm*
+	rm -f overlap ircmarkers.1 ircmarkers.html tags pod2htm* example.jpg
+
+.PHONY: all install tags clean

@@ -1,9 +1,21 @@
+ircmarkers (0.3) unstable; urgency=low
+
+  * Wrote INSTALL and example.map files.
+  * Catch error for non-existing map.
+  * Suggests: gnupg.
+  * Provide pointer to freely available maps.
+  * Removed unused dependency on libttf2.
+  * Colors configurable per marker.
+
+ -- Christoph Berg <cb@df7cb.de>  Mon, 23 Aug 2004 21:19:12 +0200
+
 ircmarkers (0.2) unstable; urgency=low
 
   * Added view_lat/view_lon (thanks to Alexander Wirt for suggesting this).
   * Made size of output map configurable.
   * Added pointers to sites with coordinates to manpage.
   * Created Debian package (Closes: #262120).
+  * Sponsored upload by Alexander Wirt <formorer@debian.org>
 
  -- Christoph Berg <cb@df7cb.de>  Sat, 31 Jul 2004 15:29:25 +0200
 

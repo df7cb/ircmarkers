@@ -47,22 +47,7 @@ sub new {
 	$file =~ /\.([^.]+)$/;
 	my $type = lc $1;
 
-	#if ($config->{view_west} or $config->{view_south}) {
-	#	die "view_lon and view_lat must both be given" unless $config->{view_west} and $config->{view_south};
-	#	die "input type must be gd2 for view_lon/view_lat" unless $type eq "gd2";
-	#	my $image = GD::Image->newFromGd2($file);
-	#	my ($width, $height) = $image->getBounds();
-	#	undef $image;
-	#	my ($west, $north);
-	#	$config->{IMAGE} = GD::Image->newFromGd2Part($file,
-	#		$west = ($config->{view_west} - $config->{west}) / ($config->{east} - $config->{west}) * $width,
-	#		$north = ($config->{view_north} - $config->{north}) / ($config->{south} - $config->{north}) * $height,
-	#		($config->{view_east} - $config->{west}) / ($config->{east} - $config->{west}) * $width - $west,
-	#		($config->{view_south} - $config->{north}) / ($config->{south} - $config->{north}) * $height - $north
-	#	);
-	#	($config->{west}, $config->{east}, $config->{south}, $config->{north}) =
-	#		($config->{view_west}, $config->{view_east}, $config->{view_south}, $config->{view_north});
-	#} els
+	die "File not found: $file" unless -f $file;
 	if ($type eq "gd2") {
 		$config->{IMAGE} = GD::Image->newFromGd2($file);
 	} elsif ($type eq "png") {
@@ -72,6 +57,7 @@ sub new {
 	} else {
 		die "Unsupported input image format $type";
 	}
+	die "Error while reading $file: $!" unless $config->{IMAGE}; # we *should* have undef here on error, but apparently haven't?!
 
 	# Let's get pixel width and height of the map
 	($config->{w}, $config->{h}) = $config->{IMAGE}->getBounds();
@@ -134,19 +120,18 @@ sub new {
 	bless $config, $class;
 }
 
-
 sub add {
-	my($config, $lon, $lat, $marker) = @_;
+	my($config, $marker) = @_;
 
 	my $dot = {
 		shape => "circle", # can be either 'dot' or 'circle'
-		colour => $config->{dot_color}, # RGB data
+		colour => $config->{markers}->{$marker}->{dot_color}, # RGB data
 		thickness => 2, # radius
 		border => $config->{dot_border}
 	};
 	my $label = {
 		text => $marker, # The text displayed
-		colour => $config->{label_color}, # RGB data
+		colour => $config->{markers}->{$marker}->{label_color}, # RGB data
 		border => $config->{label_border},
 		fontpath => $config->{font}, # Absolute path to the .ttf font file
 		fontsize => $config->{ptsize}, # Font size, unity is "points"
@@ -155,30 +140,30 @@ sub add {
 	my($x, $y, $X0);
 	if ($config->{projection} eq 'mercator') {
 		# pixel values, sprintf rounds to nearest
-		$x = sprintf("%u", ($lon- $config->{west}) / $config->{xres});
-		$y = sprintf("%u", ($config->{north} - $lat) / $config->{yres});
+		$x = sprintf("%u", ($config->{markers}->{$marker}->{lon} - $config->{west}) / $config->{xres});
+		$y = sprintf("%u", ($config->{north} - $config->{markers}->{$marker}->{lat}) / $config->{yres});
 	} elsif ($config->{projection} eq 'sinusoidal') {
 		# absolute X
-		$X0 = ($lon- $config->{center_lon}) * cos($lat* $degtorad);
+		$X0 = ($config->{markers}->{$marker}->{lon} - $config->{center_lon}) * cos($config->{markers}->{$marker}->{lat} * $degtorad);
 		# pixel values
 		$x = sprintf("%u", ($X0 - $config->{Xleft}) / $config->{xres});
-		$y = sprintf("%u", ($config->{north} - $lat) / $config->{yres});
+		$y = sprintf("%u", ($config->{north} - $config->{markers}->{$marker}->{lat}) / $config->{yres});
 	}
 
 	$config->{markers}->{$marker}->{x} = $x;
 	$config->{markers}->{$marker}->{y} = $y;
 
 	if ($config->{projection} eq 'mercator') { # marker is out of bounds
-		if(($lon > $config->{east} or $lon < $config->{west} or $lat > $config->{north} or $lat < $config->{south})) {
+		if(($config->{markers}->{$marker}->{lon} > $config->{east} or $config->{markers}->{$marker}->{lon} < $config->{west} or $config->{markers}->{$marker}->{lat} > $config->{north} or $config->{markers}->{$marker}->{lat} < $config->{south})) {
 			return;
 		}
 	} elsif ($config->{projection} eq 'sinusoidal') {
-		return if ($X0 < $config->{Xleft} or $X0 > $config->{Xright} or $lat> $config->{north} or $lat< $config->{south});
+		return if ($X0 < $config->{Xleft} or $X0 > $config->{Xright} or $config->{markers}->{$marker}->{lat} > $config->{north} or $config->{markers}->{$marker}->{lat} < $config->{south});
 	}
 
 	$config->{markers}->{$marker}->{visible} = 1;
 
-	print "$label->{text} at $lon, $lat ($x, $y)\n" unless $config->{quiet};
+	print "$label->{text} at $config->{markers}->{$marker}->{lon}, $config->{markers}->{$marker}->{lat} ($x, $y)\n" unless $config->{quiet};
 
 	my $newlabel = new IrcMarkers::Marker ($x, $y, $dot, $label, $config->{IMAGE});
 	push @{$config->{LABELS}}, $newlabel;
@@ -234,9 +219,9 @@ sub compute_overlap {
 
 	# Analyse the output
 	while (<R>) {
-		$_ =~ /(\d+)\t((\+|\-)\d+)\t((\+|\-)\d+)/;
+		/(\d+)\t([+-]\d+)\t([+-]\d+)/;
 		$self->{LABELS}->[$1]->{LABELX} = $2;
-		$self->{LABELS}->[$1]->{LABELY} = $4; #While imlib uses top, gd uses bottom
+		$self->{LABELS}->[$1]->{LABELY} = $3; #While imlib uses top, gd uses bottom
 	}
 	# Clean all this shit
 	close(R);
@@ -247,10 +232,37 @@ sub draw {
 
 	# In the end, drawing the file
 	my $image = $self->{IMAGE};
-	my $j = 0;
 	map { $_->draw_line($image); } @{$self->{LINKS}};
 	map { $_->draw_dot($image); } @{$self->{LABELS}};
 	map { $_->draw_label($image) } @{$self->{LABELS}};
+}
+
+sub draw_label_new {
+	my ($config, $nr) = @_;
+	my ($labelx, $labely, $text) = (
+		$config->{yxlabels}->[$nr]->{x},        # label upper left abscissa
+		$config->{yxlabels}->[$nr]->{y},        # label upper ordinate
+		$config->{yxlabels}->[$nr]->{text}      # label hash ref containing "text" "border" "colour" "fontpath" "fontsize"
+	);
+	my $image = $config->{IMAGE};
+	my $font = $config->{fontpath};
+	my $fontsize = $config->{fontsize};
+
+	if ($config->{border}) {
+		my $bordercolor = $image->colorResolve(@{$config->{border}});
+		$image->stringFT($bordercolor, $font, $fontsize, 0, $labelx+1, $labely+1, $text);
+		$image->stringFT($bordercolor, $font, $fontsize, 0, $labelx-1, $labely-1, $text);
+		$image->stringFT($bordercolor, $font, $fontsize, 0, $labelx+1, $labely-1, $text);
+		$image->stringFT($bordercolor, $font, $fontsize, 0, $labelx-1, $labely+1, $text);
+		$image->stringFT($bordercolor, $font, $fontsize, 0, $labelx+1, $labely, $text);
+		$image->stringFT($bordercolor, $font, $fontsize, 0, $labelx-1, $labely, $text);
+		$image->stringFT($bordercolor, $font, $fontsize, 0, $labelx, $labely-1, $text);
+		$image->stringFT($bordercolor, $font, $fontsize, 0, $labelx, $labely+1, $text);
+	}
+
+	# And finally draw the black text in the middle
+	my $fontcolor = $image->colorResolve(@{$config->{label_color}});
+	$image->stringFT($fontcolor, $font, $fontsize, 0, $labelx, $labely, $text);
 }
 
 sub write {

@@ -1,0 +1,29 @@
+# example config file for IrcMarkers, process with "ircmarkers example.map"
+
+# some markers to put on the map
+49.2532 7.0425 "Myon"
+53.517 8.133 "formorer"
+
+# some PGP keys; uncomment the following lines to put a link on the map.
+# use "gpg --recv <keyid>" to fetch the keys from a keyserver
+#"Myon" gpg:B46B923B6D8ABE71
+#"formorer" gpg:D35BBC99BC7D020A
+
+# input/output filename
+read world.jpg
+write example.jpg
+# it's a world map
+lat -90/90
+lon -180/180
+
+# uncomment the following to cut out Germany from the big map
+#view_lat 44/56
+#view_lon 4/20
+# ...and resize it
+#view_width 200
+
+# we want green labels
+label_color 0 255 0
+
+# remove the first '#' from the following line to include another config file
+##include "other_coordinates.map"

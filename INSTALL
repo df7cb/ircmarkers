@@ -1,0 +1,42 @@
+Installing IrcMarkers
+---------------------
+
+Debian:
+
+	apt-get install ircmarkers
+
+That will install IrcMarkers itself and its dependencies. The "gnupg" package
+is optional (but will probably already be installed).
+
+
+Other:
+
+Get ircmarkers_x.y.tar.gz from
+
+	http://www.df7cb.de/projects/ircmarkers/packages/
+
+Unpack, build, and install it:
+
+	tar xfz ircmarkers_x.y.tar.gz
+	cd ircmarkers-x.y
+	make
+	make install
+
+(Obviously, the last step needs to be executed as root.)
+
+IrcMarkers requires the GD2 perl library to run. Check your OS's manual
+on how to install that package. If you want to install it from source,
+go to http://www.boutell.com/gd/.
+
+If you want to use the "map of trust" feature, install GnuPG
+(http://www.gnupg.org/).
+
+
+Using IrcMarkers
+----------------
+
+You need a map in mercator or sinusoidal projection. A fine starting place is
+
+	http://visibleearth.nasa.gov/cgi-bin/viewrecord?11656
+
+The example.map file contains a short config file to get started with.
