@@ -13,44 +13,46 @@
 
 use strict;
 use warnings;
-use lib '/home/cb/public_html/irc/src';
-use lib '.';
-use Getopt::Std;
+use Getopt::Long;
 
 use IrcMarkers::File;
 use IrcMarkers::Map;
 
-my %opt;
-getopts('x:y:', \%opt);
-
-my $config = IrcMarkers::File->new;;
-
-sub usage {
-	print "usage: $0 cities.txt map.jpg output.jpg\n";
+sub VERSION_MESSAGE {
+	print "IrcMarkers v0.1 (C) 2004 Christoph Berg <cb\@df7cb.de>, GNU GPL.\n";
 	exit 0;
 }
 
-if($ARGV[0]) {
-	$config->read($ARGV[0]);
-} else {
-	die "usage: $0 [-x west/east] [-y south/north] config [inputmap outputmap]\n";
+sub HELP_MESSAGE {
+	print "usage: $0 [-x west/east] [-y south/north] config [inputmap outputmap]\n";
+	exit 0;
 }
 
-if($opt{x}) {
-	$opt{x} =~ /(.*)\/(.*)/ or die "invalid -x format";
+my $config = IrcMarkers::File->new;
+
+my ($x, $y);
+GetOptions(
+	'x=s' => \$x,
+	'y=s' => \$y,
+	'q' => \$config->{quiet},
+	help => sub { HELP_MESSAGE(); },
+	version => sub { VERSION_MESSAGE(); },
+) or exit(1);
+
+HELP_MESSAGE() unless $ARGV[0];
+$config->read($ARGV[0]);
+
+if($x) { # after $config->read so -x can override lon
+	$x =~ /(.*)\/(.*)/ or die "invalid -x format";
 	($config->{west}, $config->{east}) = ($1, $2);
 }
-if($opt{y}) {
-	$opt{y} =~ /(.*)\/(.*)/ or die "invalid -y format";
+if($y) {
+	$y =~ /(.*)\/(.*)/ or die "invalid -y format";
 	($config->{south}, $config->{north}) = ($1, $2);
 }
 
-if($ARGV[1]) {
-	$config->{read} = $ARGV[1];
-}
-if($ARGV[2]) {
-	$config->{write} = $ARGV[2];
-}
+$config->{read} = $ARGV[1] if $ARGV[1];
+$config->{write} = $ARGV[2] if $ARGV[2];
 
 die "no input map" unless $config->{read};
 die "no output map" unless $config->{write};
@@ -72,3 +74,80 @@ foreach my $link (keys %{$config->{links}}) {
 }
 
 $map->draw($config->{write});
+
+__END__
+
+=head1 NAME
+
+B<ircmarkers> - place markers on maps at given coordinates
+
+=head1 SYNOPSIS
+
+B<ircmarkers> [-x I<west/east> -y I<south/north>] F<config> [F<inputmap> F<outputmap>]
+
+=head1 DESCRIPTION
+
+IrcMarkers takes a map in .png or .jpg format and a list of coordinates
+and labels in xplanet format and places the labels on the map.
+It was written to generate user maps of IRC channels.
+
+=head1 OPTIONS
+
+=head1 EXAMPLES
+
+=head1 FILES
+
+=head1 BUGS
+
+None known.
+
+=head1 NOTES
+
+=head1 SEE ALSO
+
+=over
+
+=item *
+
+MapMarkers: http://www.nul-en.info/mapmarkers/
+
+=item *
+
+xplanet: http://xplanet.sourceforge.net/
+
+=item *
+
+Image::WorldMap: http://www.astray.com/WorldMap/
+
+=back
+
+=head1 AUTHOR
+
+IrcMarkers was written by Christoph Berg <cb@df7cb.de>.
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2004 Christoph Berg <cb@df7cb.de>
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License with the
+Debian GNU/Linux distribution in file F</usr/share/common-licenses/GPL>; if not,
+write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
+Boston, MA  02111-1307  USA
+
+IrcMarkers is an improved version of MapMarkers.
+
+Copyright (C) 2003 Guillaume Leclanche (Mo-Ize) <mo-ize@nul-en.info>
+
+The font provides with this package, fixed_01.ttf, has been created by the
+Orgdot team, http://www.orgdot.com/aliasfonts/.
+
+(C) 2001 http://www.orgdot.com

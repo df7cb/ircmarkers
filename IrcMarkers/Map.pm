@@ -1,4 +1,4 @@
-#    (c) 2004 Christoph Berg <cb@df7cb.de>
+#    Copyright (C) 2004 Christoph Berg <cb@df7cb.de>
 #
 #    This file originated from the mapmarkers distribution:
 #
@@ -77,6 +77,8 @@ sub new {
 		die("ERROR: ".$config->{projection}.": This projection system is not supported yet.");
 	}
 
+	die "font not found: $config->{font}" unless -f $config->{font};
+
 	bless $config, $class;
 }
 
@@ -85,17 +87,17 @@ sub add {
 	my($config, $lon, $lat, $marker) = @_;
 
 	my $dot = {
-		shape => "circle",          # can be either 'dot' or 'circle'
-		colour => $config->{dot_color},      # RGB data
-		thickness => 2,             # radius
-		border => [0,0,0]           # RGB data
+		shape => "circle", # can be either 'dot' or 'circle'
+		colour => $config->{dot_color}, # RGB data
+		thickness => 2, # radius
+		border => $config->{dot_border}
 	};
 	my $label = {
-		text => $marker,               # The text displayed
-		colour => $config->{label_color},      # RGB data
-		border => [0,0,0],          # RGB data
-		fontpath => $config->{font},      # Absolute path to the .ttf font file
-		fontsize => $config->{ptsize},         # Font size, unity is "points"
+		text => $marker, # The text displayed
+		colour => $config->{label_color}, # RGB data
+		border => $config->{label_border},
+		fontpath => $config->{font}, # Absolute path to the .ttf font file
+		fontsize => $config->{ptsize}, # Font size, unity is "points"
 	};
 	my($x, $y);
 
@@ -124,7 +126,7 @@ sub add {
 	$config->{markers}->{$marker}->{x} = $x;
 	$config->{markers}->{$marker}->{y} = $y;
 
-	print "$label->{text} at $lon, $lat ($x, $y)\n";
+	print "$label->{text} at $lon, $lat ($x, $y)\n" unless $config->{quiet};
 
 	# Pixels are supposed to be unsigned integers, sprintf rounds to nearest.
 	my $newlabel = new IrcMarkers::Marker ($x, $y, $dot, $label, $config->{IMAGE});
@@ -149,14 +151,13 @@ sub draw {
 
 	# Handling overlaps
 	if($self->{overlap_correction}) {
-		warn "overlap binary not found" unless -x "./overlap";
 		# We execute the program in order to be able to read its output
 		# 3 is the offset: space between dot and text
 
-		my $command = "./overlap " . (scalar @{$self->{LABELS}}) . " " . $self->{w} . " " . $self->{h} . " 3";
+		my $command = $self->{overlap} . " " . (scalar @{$self->{LABELS}}) . " " . $self->{w} . " " . $self->{h} . " 3";
 
 		my($rdrfh, $wtrfh);
-		my $pid = open2(\*R, \*W, $command);
+		my $pid = open2(\*R, \*W, $command) or die "open2: $!";
 
 		my $m = 0;
 		map {

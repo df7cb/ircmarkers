@@ -15,10 +15,14 @@ sub new {
 		south => -90,
 		center_lon => 0,
 		dot_color => [255, 255, 255],
+		dot_border => [0, 0, 0],
 		label_color => [255, 255, 0],
+		label_border => [0, 0, 0],
 		link_color => [255, 128, 0],
-		font => './fixed_01.ttf',
+		font => '/usr/share/ircmarkers/fixed_01.ttf',
 		ptsize => 6,
+		quiet => 0,
+		overlap => '/usr/lib/ircmarkers/overlap',
 		overlap_correction => 1,
 	};
 	bless $config;
@@ -53,24 +57,33 @@ sub read {
 			$config->{projection} = $1;
 		} elsif(/^center_lon (.+)/) {
 			$config->{center_lon} = $1;
-		} elsif(/^dot_colou?r (\d+) (\d+) (\d+)/) {
+		} elsif(/^dot_colou?r (\d+) (\d+) (\d+)$/) {
 			$config->{dot_color} = [$1, $2, $3];
-		} elsif(/^label_colou?r (\d+) (\d+) (\d+)/) {
+		} elsif(/^dot_border (\d+) (\d+) (\d+)$/) {
+			$config->{dot_border} = [$1, $2, $3];
+		} elsif(/^label_colou?r (\d+) (\d+) (\d+)$/) {
 			$config->{label_color} = [$1, $2, $3];
-		} elsif(/^link_colou?r (\d+) (\d+) (\d+)/) {
+		} elsif(/^label_border (no|off|none)$/) {
+			delete $config->{label_border};
+		} elsif(/^label_border (\d+) (\d+) (\d+)$/) {
+			$config->{label_border} = [$1, $2, $3];
+		} elsif(/^link_colou?r (\d+) (\d+) (\d+)$/) {
 			$config->{link_color} = [$1, $2, $3];
 		} elsif(/^font (.+)/) {
 			$config->{font} = $1;
 		} elsif(/^ptsize (.+)/) {
 			$config->{ptsize} = $1;
+		} elsif(/^overlap (.+)/) {
+			$config->{overlap} = $1;
 		} elsif(/^overlap_correction (.+)/) {
 			$config->{overlap_correction} = $1;
-		} elsif(/^([\d.,]+)\s+([\d.,]+)\s+"([^"]*)"/) { # xplanet marker file format
-			my ($lat, $lon, $text) = ($1, $2, $3);
+		} elsif(/^([\d.,-]+)\s+([\d.,-]+)\s+"([^"]*)"(.*)/) { # xplanet marker file format
+			my ($lat, $lon, $text, $opt) = ($1, $2, $3, $4);
 			$lat =~ s/,/./;
 			$lon =~ s/,/./;
 			$config->{markers}->{$text}->{lat} = $lat;
 			$config->{markers}->{$text}->{lon} = $lon;
+			$opt =~ s/^ +|#.*//;
 		} elsif(/"([^"]*)" -> "([^"]*)"/) {
 			$config->{links}->{$1}->{$2} = 1;
 		} else {
