@@ -35,8 +35,16 @@ If you want to use the "map of trust" feature, install GnuPG
 Using IrcMarkers
 ----------------
 
-You need a map in mercator or sinusoidal projection. A fine starting place is
+You need a map in mercator or sinusoidal projection. The IrcMarkers manpage
+contains some pointers. The example.map file contains a short config file to
+get started with.
 
-	http://visibleearth.nasa.gov/cgi-bin/viewrecord?11656
 
-The example.map file contains a short config file to get started with.
+Upgrading IrcMarkers
+--------------------
+
+In versions prior to 0.3, some settings that are now local to a marker were
+global and could hence be specified at any place in the config. Now, fonts and
+color definitions etc. have to be placed *before* marker definitions.
+
+ -- Christoph Berg, Sat Oct  2 17:48:33 CEST 2004
