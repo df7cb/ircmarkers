@@ -3,9 +3,9 @@ ircmarkers (0.4) unstable; urgency=low
   * Allow arbitrary whitespace in config (requested by Uli Martens).
   * Fix center_lon check (requested by Elmar Hoffmann).
   * Support ~/ in file names.
-  * Support negative label coordinates.
+  * Support negative label positions.
 
- -- Christoph Berg <cb@df7cb.de>  Tue,  7 Sep 2004 00:44:47 +0200
+ -- Christoph Berg <cb@df7cb.de>  Tue,  7 Sep 2004 02:46:50 +0200
 
 ircmarkers (0.3) unstable; urgency=low
 
@@ -17,8 +17,8 @@ ircmarkers (0.3) unstable; urgency=low
   * Catch error for non-existing map.
   * Fix error in sinusoidal projection.
   * Complain about some unreasonable map defintions (thanks to Elmar Hoffmann
-    these).
-  * Non-marker labels (for headlines etc.).
+    for these suggestions).
+  * Non-marker labels (for headlines etc).
   * Manpage: provide pointers to freely available maps.
   * Wrote INSTALL, example.map, and README.Debian files.
 
