@@ -35,15 +35,21 @@ use IrcMarkers::Map;
 # Debug
 #use Data::Dumper;
 
-my $VERSION = "v0.2";
+my $VERSION = "v0.3";
 
 sub VERSION_MESSAGE {
 	print "IrcMarkers $VERSION (C) 2004 Christoph Berg <cb\@df7cb.de>, GNU GPL.\n";
-	exit 0;
 }
 
 sub HELP_MESSAGE {
-	print "usage: $0 [-x west/east] [-y south/north] config [inputmap outputmap]\n";
+	VERSION_MESSAGE();
+	print <<EOT;
+usage: $0 [options] config [inputmap outputmap]
+-q             be quiet
+-o command     configuration command
+-x west/east   latitude bounds of input map
+-y south/north longitude bounds of input map
+EOT
 	exit 0;
 }
 
@@ -54,9 +60,10 @@ GetOptions(
 	'x=s' => \$x,
 	'y=s' => \$y,
 	'q' => \$config->{quiet},
+	'o=s' => sub { shift; $config->parse(shift); },
 	help => sub { HELP_MESSAGE(); },
-	version => sub { VERSION_MESSAGE(); },
-) or exit(1);
+	version => sub { VERSION_MESSAGE(); exit(0); },
+) or HELP_MESSAGE();
 
 HELP_MESSAGE() unless $ARGV[0];
 $config->read($ARGV[0]);
@@ -97,8 +104,10 @@ foreach my $link (keys %{$config->{links}}) {
 
 $map->compute_overlap() if($config->{overlap_correction});
 $map->draw();
-foreach my $nr (0 .. @{$config->{yxlabels}} - 1) {
-	$map->draw_label_new($config->{yxlabels}->[$nr]);
+if($config->{yxlabels}) {
+	foreach my $nr (0 .. @{$config->{yxlabels}} - 1) {
+		$map->draw_label_new($config->{yxlabels}->[$nr]);
+	}
 }
 $map->write($config->{write});
 
@@ -110,7 +119,7 @@ B<ircmarkers> - place markers on maps at given coordinates
 
 =head1 SYNOPSIS
 
-B<ircmarkers> [-q] [-y I<south/north> -x I<west/east>] F<config> [F<inputmap> F<outputmap>]
+B<ircmarkers> [-q] [-o command] [-y I<south/north> -x I<west/east>] F<config> [F<inputmap> F<outputmap>]
 
 =head1 DESCRIPTION
 
@@ -134,6 +143,11 @@ config file.
 Be quiet. Per default, IrcMarkers prints which labels and links are placed on
 the map.
 
+=item -o I<command>
+
+Evaluate a configuration command. It will be executed before any commands in
+the config file (i.e. it will not override commands there).
+
 =item -y I<south/north>
 
 =item -x I<west/east>
@@ -145,7 +159,7 @@ left/right edge longitude. Per default, the map is assumed to be a world map
 
 =item F<config>
 
-Config file to read markers and options from.
+Config file to read markers and options from. This parameter is mandatory.
 
 =item F<inputmap>
 
@@ -159,9 +173,11 @@ Write output map to F<outputmap>. Supported formats are .gif, .jpg/jpeg, .png,
 
 =back
 
-=head1 FILES
+=head1 CONFIG FILE SYNTAX
 
 The following directives can be used in the config file:
+
+=head2 Marker Definitions
 
 =over
 
@@ -172,13 +188,28 @@ The following directives can be used in the config file:
 =item "I<label>" I<options>
 
 Place marker with label on map at given (decimal) coordinates.
+Use negative values for south/east, positive for north/west.
+This format is compatible with the xplanet syntax.
 The following is a marker for Myon in Germany:
 
 B<49.2532 7.0425 "Myon">
 
-This format is compatible with the xplanet syntax.
+=item "I<marker1>" -> "I<marker2>"
 
-The following options are available:
+Draw a link between I<marker1> and I<marker2>.
+
+=item label I<y> I<x>
+
+=item label I<y> I<x> I<options>
+
+Place a label at position I<y>/I<x> (in pixels). Useful for headlines etc.
+
+=back
+
+=head2 Marker Options
+
+The following options can be specified per marker or globally (except gpg).
+Global options set defaults for all following marker definitions.
 
 =over
 
@@ -193,11 +224,42 @@ B<"Myon" gpg B46B923B6D8ABE71 gpg C5AF774A58510B5A>
 B<Note:> This is the long, 16 character keyid. To retrieve it, use C<gpg
 --list-key --with-colon>.
 
+=item dot_color I<R G B>
+
+=item dot_border I<R G B>
+
+Color of the dots placed on the map. Default is dot_color 255 255 255,
+dot_border 0 0 0.
+
+=item dot_size I<size>
+
+Size of the dots. Default is 2.
+
+=item dot_shape dot|circle
+
+Dots are filled (dot) or hollow (circle). Default is dot.
+
+=item label_color I<R G B>
+
+=item label_border I<R G B>|none
+
+Color of the labels placed on the map. Default is label_color 255 255 0,
+label_border 0 0 0. The border can be removed by specifying the "none" color.
+
+=item font F<fontfile>
+
+Full pathname to the .ttf font used for the labels. Default is
+font F</usr/share/ircmarkers/fixed_01.ttf>.
+
+=item ptsize I<size>
+
+Size in points of the labels. Default is ptsize 6.
+
 =back
 
-=item "I<marker1>" -> "I<marker2>"
+=head2 Global Options
 
-Draw a link between I<marker1> and I<marker2>.
+=over
 
 =item read F<inputmap>
 
@@ -217,6 +279,9 @@ and .wbmp.
 =item west_east I<west/east>
 
 Declare input map dimensions. Default is lat -90/90, lon -180/180.
+
+B<Note:> It is possible to use "unusual" values like lon 0/360 if you adjust
+the coordinates as well. (-20 becomes 340 etc.)
 
 =item view_lat I<south/north>
 
@@ -241,20 +306,6 @@ Size of output map. Default is input map, or size of part selected.
 Map projection. Default is mercator.
 center_lon is only used for sinusoidal projection.
 
-=item dot_color I<R G B>
-
-=item dot_border I<R G B>
-
-Color of the dots placed on the map. Default is dot_color 255 255 255,
-dot_border 0 0 0.
-
-=item label_color I<R G B>
-
-=item label_border I<R G B>|none
-
-Color of the labels placed on the map. Default is label_color 255 255 0,
-label_border 0 0 0. The border can be removed by specifying the "none" color.
-
 =item link_outside on|off
 
 Whether to draw lines to markers that are not visible on the map. Default is
@@ -270,15 +321,6 @@ Color of the lines drawn between the markers. Default is link_color 255 255 0.
 
 Color of the lines drawn for uni-directional GnuPG/PGP signatures. Default is
 link_color none.
-
-=item font F<fontfile>
-
-Full pathname to the .ttf font used for the labels. Default is
-font F</usr/share/ircmarkers/fixed_01.ttf>.
-
-=item ptsize I<size>
-
-Size in points of the labels. Default is ptsize 6.
 
 =item overlap F<overlapcorrector>
 
@@ -313,8 +355,8 @@ B<ircmarkers -x -10.4/29.4 -y 32/72 coordinates.txt europe.jpg mutt-eu.jpg>
 	lat 44/56
 	lon 4/20
 	label_color 0 255 0
-	
 	49.2532 7.0425 "Myon"
+	53.517 8.133 "formorer" label_color 255 255 0
 	#include "debian.de.txt"
 	#include "debian.de.keys"
 
@@ -399,6 +441,8 @@ IrcMarkers was written by Christoph Berg <cb@df7cb.de>.
 Thanks go to Uli Martens for the "map of trust" idea.
 
 Alexander Wirt suggested the capability to draw selected parts of the map.
+
+Elmar Hoffmann suggested several error checks and config options.
 
 The IrcMarkers homepage is at B<http://www.df7cb.de/projects/ircmarkers/>.
 

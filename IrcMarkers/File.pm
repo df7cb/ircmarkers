@@ -33,6 +33,8 @@ sub new {
 		center_lon => 0,
 		dot_color => [255, 255, 255],
 		dot_border => [0, 0, 0],
+		dot_size => 2,
+		dot_shape => 'dot',
 		label_color => [255, 255, 0],
 		label_border => [0, 0, 0],
 		link_outside => 0,
@@ -47,10 +49,17 @@ sub new {
 	bless $config;
 }
 
-sub default_options {
+sub default_options { # this will be obsolete if all items are deOOified
 	my $config = shift;
 	my $item = shift;
+	$item->{dot_color} ||= $config->{dot_color};
+	$item->{dot_border} ||= $config->{dot_border};
+	$item->{dot_size} ||= $config->{dot_size};
+	$item->{dot_shape} ||= $config->{dot_shape};
 	$item->{label_color} ||= $config->{label_color};
+	$item->{label_border} ||= $config->{label_border};
+	$item->{font} ||= $config->{font};
+	$item->{ptsize} ||= $config->{ptsize};
 }
 
 sub parse_options {
@@ -59,9 +68,9 @@ sub parse_options {
 	die "huh?" unless ref $item;
 	my $marker = shift; # defined for markers, undef for yxlabels
 	my $opt = shift;
-	while($opt) { # loop over options
+	while($opt ne '') { # loop over options
 		$opt =~ s/^\s+|#.*//g;
-		last unless $opt;
+		last unless $opt ne '';
 		if($marker and $opt =~ s/^gpg[ :](?:0x)?([0-9a-fx]+)//i) { # ':' is deprecated old syntax
 			my $k = uc $1;
 			if($config->{gpg}->{$k} and $config->{gpg}->{$k} ne $marker) {
@@ -72,8 +81,14 @@ sub parse_options {
 		# local options
 		} elsif($opt =~ s/^dot_colou?r (\d+) (\d+) (\d+)//) {
 			$item->{dot_color} = [$1, $2, $3];
+		} elsif($opt =~ s/^dot_border (no(ne)?|off)//) {
+			$item->{dot_border} = -1;
 		} elsif($opt =~ s/^dot_border (\d+) (\d+) (\d+)//) {
 			$item->{dot_border} = [$1, $2, $3];
+		} elsif($opt =~ s/^dot_size (\d+)//) {
+			$item->{dot_size} = $1;
+		} elsif($opt =~ s/^dot_shape (dot|circle)//) {
+			$item->{dot_shape} = $1;
 		} elsif($opt =~ s/^label_colou?r (\d+) (\d+) (\d+)//) {
 			$item->{label_color} = [$1, $2, $3];
 		} elsif($opt =~ s/^label_border (no(ne)?|off)//) {
@@ -87,13 +102,97 @@ sub parse_options {
 			$item->{ptsize} = $1;
 		# error
 		} else {
-			warn "$config->{file}:$.: unknown option: $opt\n";
+			my $loc = $config->{file} ? "$config->{file}:$." : "-o";
+			warn "$loc: unknown option: $opt\n";
 			last;
 		}
 	}
 }
 
 my $labelnr = 0;
+sub parse {
+	my $config = shift;
+	$_ = shift;
+
+	return if /^\s*$/;
+	if(/^#include [<"](.+)[">]/) { # include next config file
+		$config->read($1);
+		return;
+	}
+	return if /^#/;
+
+	# global options
+	if(/^read (.+)/) {
+		$config->{read} = $1;
+	} elsif(/^write (.+)/) {
+		$config->{write} = $1;
+	} elsif(/^(lon|west_east) (.+)\/(.+)/) {
+		$config->{west} = $2;
+		$config->{east} = $3;
+	} elsif(/^(lat|south_north) (.+)\/(.+)/) {
+		$config->{south} = $2;
+		$config->{north} = $3;
+	} elsif(/^view_(lon|west_east) (.+)\/(.+)/) {
+		$config->{view_west} = $2;
+		$config->{view_east} = $3;
+	} elsif(/^view_(lat|south_north) (.+)\/(.+)/) {
+		$config->{view_south} = $2;
+		$config->{view_north} = $3;
+	} elsif(/^view_width (.+)/) {
+		$config->{view_width} = $1;
+	} elsif(/^view_height (.+)/) {
+		$config->{view_height} = $1;
+	} elsif(/^projection (mercator|sinusoidal)/) {
+		$config->{projection} = $1;
+	} elsif(/^center_lon (.+)/) {
+		$config->{center_lon} = $1;
+	} elsif(/^link_outside (on|yes)/) {
+		$config->{link_outside} = 1;
+	} elsif(/^link_outside (off|no)/) {
+		$config->{link_outside} = 0;
+	} elsif(/^(?:link|sign2)_colou?r (\d+) (\d+) (\d+)$/) {
+		$config->{link_color} = [$1, $2, $3];
+	} elsif(/^sign1_colou?r (no|off|none)$/) {
+		delete $config->{sign1_color};
+	} elsif(/^sign1_colou?r (\d+) (\d+) (\d+)$/) {
+		$config->{sign1_color} = [$1, $2, $3];
+	} elsif(/^overlap (.+)/) {
+		$config->{overlap} = $1;
+	} elsif(/^overlap_correction (on|yes)/) {
+		$config->{overlap_correction} = 1;
+	} elsif(/^overlap_correction (off|no)/) {
+		$config->{overlap_correction} = 0;
+	} elsif(/^quiet (on|yes)/) {
+		$config->{quiet} = 1;
+	} elsif(/^quiet (off|no)/) {
+		$config->{quiet} = 0;
+	# marker definitions
+	} elsif(/^([\d.,-]+)\s+([\d.,-]+)\s+"([^"]+)"(.*)/) { # xplanet marker file format
+		my ($lat, $lon, $marker, $opt) = ($1, $2, $3, $4);
+		$lat =~ s/,/./;
+		$lon =~ s/,/./;
+		$config->{markers}->{$marker}->{lat} = $lat;
+		$config->{markers}->{$marker}->{lon} = $lon;
+		$config->default_options($config->{markers}->{$marker});
+		$config->parse_options($config->{markers}->{$marker}, $marker, $opt);
+	} elsif(/^"([^"]*)"(.*)/) { # marker with options
+		my ($marker, $opt) = ($1, $2);
+		$config->{markers}->{$marker} ||= {};
+		$config->parse_options($config->{markers}->{$marker}, $marker, $opt);
+	} elsif(/"([^"]*)" -> "([^"]+)"/) {
+		$config->{links}->{$1}->{$2} = 1;
+	} elsif(/^label (\d+) (\d+) "([^"]+)"(.*)/) {
+		$config->{yxlabels}->[$labelnr] = { y => $1, x => $2, text => $3 };
+		my $opt = $4;
+		$config->default_options($config->{yxlabels}->[$labelnr]);
+		$config->parse_options($config->{yxlabels}->[$labelnr], undef, $opt);
+		$labelnr++;
+	# everything else is a globally applied local option or a syntax error
+	} else {
+		$config->parse_options($config, undef, $_);
+	}
+}
+
 sub read {
 	my $config = shift;
 	my $file = shift || die "read: no filename";
@@ -102,84 +201,7 @@ sub read {
 	my $fh = IO::File->new($file) or die "$file: $!";
 	while (<$fh>) {
 		chomp;
-		next if /^\s*$/;
-		if(/^#include [<"](.+)[">]/) { # include next config file
-			$config->read($1);
-			next;
-		}
-		last if /^#eof/; # EOF marker
-		next if /^#/;
-
-		# global options
-		if(/^read (.+)/) {
-			$config->{read} = $1;
-		} elsif(/^write (.+)/) {
-			$config->{write} = $1;
-		} elsif(/^(lon|west_east) (.+)\/(.+)/) {
-			$config->{west} = $2;
-			$config->{east} = $3;
-		} elsif(/^(lat|south_north) (.+)\/(.+)/) {
-			$config->{south} = $2;
-			$config->{north} = $3;
-		} elsif(/^view_(lon|west_east) (.+)\/(.+)/) {
-			$config->{view_west} = $2;
-			$config->{view_east} = $3;
-		} elsif(/^view_(lat|south_north) (.+)\/(.+)/) {
-			$config->{view_south} = $2;
-			$config->{view_north} = $3;
-		} elsif(/^view_width (.+)/) {
-			$config->{view_width} = $1;
-		} elsif(/^view_height (.+)/) {
-			$config->{view_height} = $1;
-		} elsif(/^projection (mercator|sinusoidal)/) {
-			$config->{projection} = $1;
-		} elsif(/^center_lon (.+)/) {
-			$config->{center_lon} = $1;
-		} elsif(/^link_outside (on|yes)/) {
-			$config->{link_outside} = 1;
-		} elsif(/^link_outside (off|no)/) {
-			$config->{link_outside} = 0;
-		} elsif(/^(?:link|sign2)_colou?r (\d+) (\d+) (\d+)$/) {
-			$config->{link_color} = [$1, $2, $3];
-		} elsif(/^sign1_colou?r (no|off|none)$/) {
-			delete $config->{sign1_color};
-		} elsif(/^sign1_colou?r (\d+) (\d+) (\d+)$/) {
-			$config->{sign1_color} = [$1, $2, $3];
-		} elsif(/^overlap (.+)/) {
-			$config->{overlap} = $1;
-		} elsif(/^overlap_correction (on|yes)/) {
-			$config->{overlap_correction} = 1;
-		} elsif(/^overlap_correction (off|no)/) {
-			$config->{overlap_correction} = 0;
-		} elsif(/^quiet (on|yes)/) {
-			$config->{quiet} = 1;
-		} elsif(/^quiet (off|no)/) {
-			$config->{quiet} = 0;
-		# marker definitions
-		} elsif(/^([\d.,-]+)\s+([\d.,-]+)\s+"([^"]+)"(.*)/) { # xplanet marker file format
-			my ($lat, $lon, $marker, $opt) = ($1, $2, $3, $4);
-			$lat =~ s/,/./;
-			$lon =~ s/,/./;
-			$config->{markers}->{$marker}->{lat} = $lat;
-			$config->{markers}->{$marker}->{lon} = $lon;
-			$config->default_options($config->{markers}->{$marker});
-			$config->parse_options($config->{markers}->{$marker}, $marker, $opt);
-		} elsif(/^"([^"]*)"(.*)/) { # marker with options
-			my ($marker, $opt) = ($1, $2);
-			$config->{markers}->{$marker} ||= {};
-			$config->parse_options($config->{markers}->{$marker}, $marker, $opt);
-		} elsif(/"([^"]*)" -> "([^"]+)"/) {
-			$config->{links}->{$1}->{$2} = 1;
-		} elsif(/^label (\d+) (\d+) "([^"]+)"(.*)/) {
-			$config->{yxlabels}->[$labelnr] = { y => $1, x => $2, text => $3 };
-			my $opt = $4;
-			$config->default_options($config->{yxlabels}->[$labelnr]);
-			$config->parse_options($config->{yxlabels}->[$labelnr], undef, $opt);
-			$labelnr++;
-		# everything else is a globally applied local option or a syntax error
-		} else {
-			$config->parse_options($config, undef, $_);
-		}
+		$config->parse($_);
 	}
 	close $fh;
 

@@ -9,6 +9,9 @@ overlap:
 ircmarkers.1: ircmarkers
 	pod2man --release="$(VERSION)" --center="User Documentation" $< > $@
 
+ircmarkers.man: ircmarkers.1
+	nroff -man $< > $@
+
 ircmarkers.html: ircmarkers
 	pod2html --title="$<" $< > $@
 
@@ -25,6 +28,6 @@ tags:
 	ctags ircmarkers IrcMarkers/*.pm
 
 clean:
-	rm -f overlap ircmarkers.1 ircmarkers.html tags pod2htm* example.jpg
+	rm -f overlap ircmarkers.1 ircmarkers.man ircmarkers.html tags pod2htm* example.jpg
 
 .PHONY: all install tags clean

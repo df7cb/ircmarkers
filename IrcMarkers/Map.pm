@@ -75,6 +75,7 @@ sub new {
 	die "latitude range greater than 360 degrees" if $config->{east} - $config->{west} > 360;
 	die "southern longitude greater than northern" if $config->{south} >= $config->{north};
 	die "longitude range greater than 180 degrees" if $config->{north} - $config->{south} > 180;
+	die "center_lon is not between lon coordinates" if $config->{projection} eq 'sinusoidal' and $config->{center_lon} < $config->{west} or $config->{center_lon} > $config->{east};
 
 	# handle view_*
 	if ($config->{view_west} or $config->{view_south} or $config->{view_width} or $config->{view_height}) {
@@ -124,9 +125,10 @@ sub new {
 		$config->{xres} = ($config->{east} - $config->{west}) / $config->{w};
 		$config->{yres} = ($config->{north} - $config->{south}) / $config->{h};
 	} elsif ($config->{projection} eq 'sinusoidal') {
+		die "center_lon is not between lon coordinates" if $config->{center_lon} < $config->{west} or $config->{center_lon} > $config->{east};
 		# These 2 are not in pixels, but in absolute coordinates. To get pixels, they should be multiplied by $xres.
-		$config->{Xright} = ($config->{west} - $config->{center_lon}) * cos($config->{north} * $degtorad);
-		$config->{Xleft}  = ($config->{east} - $config->{center_lon}) * cos($config->{south} * $degtorad);
+		$config->{Xleft} = ($config->{west} - $config->{center_lon}) * cos($config->{north} * $degtorad);
+		$config->{Xright}  = ($config->{east} - $config->{center_lon}) * cos($config->{south} * $degtorad);
 
 		# number of unitary graduation / pixel for x (RESolution)
 		$config->{xres} = ($config->{Xright} - $config->{Xleft}) / $config->{w};
@@ -145,17 +147,17 @@ sub add {
 	my($config, $marker) = @_;
 
 	my $dot = {
-		shape => "circle", # can be either 'dot' or 'circle'
+		shape => $config->{markers}->{$marker}->{dot_shape}, # can be either 'dot' or 'circle'
 		colour => $config->{markers}->{$marker}->{dot_color}, # RGB data
-		thickness => 2, # radius
-		border => $config->{dot_border}
+		thickness => $config->{markers}->{$marker}->{dot_size}, # radius
+		border => $config->{markers}->{$marker}->{dot_border}
 	};
 	my $label = {
 		text => $marker, # The text displayed
 		colour => $config->{markers}->{$marker}->{label_color}, # RGB data
-		border => $config->{label_border},
-		fontpath => $config->{font}, # Absolute path to the .ttf font file
-		fontsize => $config->{ptsize}, # Font size, unity is "points"
+		border => $config->{markers}->{$marker}->{label_border},
+		fontpath => $config->{markers}->{$marker}->{font}, # Absolute path to the .ttf font file
+		fontsize => $config->{markers}->{$marker}->{ptsize}, # Font size, unity is "points"
 	};
 
 	my($x, $y, $X0);

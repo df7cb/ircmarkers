@@ -1,9 +1,5 @@
 # example config file for IrcMarkers, process with "ircmarkers example.map"
 
-# some markers to put on the map
-49.2532 7.0425 "Myon"
-53.517 8.133 "formorer"
-
 # some PGP keys; uncomment the following lines to put a link on the map.
 # use "gpg --recv <keyid>" to fetch the keys from a keyserver
 #"Myon" gpg B46B923B6D8ABE71
@@ -24,6 +20,11 @@ lon -180/180
 
 # we want green labels
 label_color 0 255 0
+
+# some markers and labels to put on the map
+49.2532 7.0425 "Myon"
+53.517 8.133 "formorer"
+label 15 5 "#debian.de map"
 
 # remove the first '#' from the following line to include another config file
 ##include "other_coordinates.map"

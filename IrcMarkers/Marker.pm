@@ -104,7 +104,7 @@ sub draw_dot {
 	$dot->{shape}       = 'dot'             if (!defined $dot->{shape});
 
 	my $dotcolour = $image->colorResolve(@{$dot->{colour}});
-	my $dotborder = (defined $dot->{border} ? $image->colorResolve(@{$dot->{border}}) : undef);
+	my $dotborder = (ref $dot->{border} ? $image->colorResolve(@{$dot->{border}}) : undef);
 
 	if ($dot->{shape} eq 'dot') {
 		$image->arc($x,$y, $dot->{thickness}+1, $dot->{thickness}+1, 0, 360, $dotborder) if defined $dotborder;
