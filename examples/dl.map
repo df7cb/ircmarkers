@@ -8,7 +8,7 @@ lon 4/20
 #label_color 0 0 0
 #label_border 255 255 255
 #label_border off
-#sign1_color 100 100 100
+sign1_color 100 100 100
 
 #"Myon" -> "youam"
 #"Myon" -> "weasel"
@@ -17,3 +17,6 @@ lon 4/20
 
 #include "examples/debian.de"
 #include "examples/debian.de.keys"
+
+#"Tauon" gpg:C5AF774A58510B5A
+#49.0         7.2425  "Tauon"

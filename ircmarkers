@@ -70,11 +70,13 @@ foreach my $marker (keys %{$config->{markers}}) {
 
 if($config->{gpg}) { # there are gpg keys
 	my $keys = join ' ', keys %{$config->{gpg}};
+	#print "gpg --list-sigs --with-colon --fixed-list-mode --fast-list-mode $keys\n";
 	open GPG, "gpg --list-sigs --with-colon --fixed-list-mode --fast-list-mode $keys |" or die "gpg: $!";
 	my $key;
 	while(<GPG>) {
 		chomp;
 		next if /^(rev|sub|tru|uat):/;
+		#print "$_\n";
 		if(/^pub::\d+:\d+:([0-9A-F]+):/) {
 			$key = $1;
 			warn "$key not related to any marker - did you use the long (16 char) keyid?\n" unless $config->{gpg}->{$key};
@@ -82,7 +84,7 @@ if($config->{gpg}) { # there are gpg keys
 		} elsif(/^sig:::\d+:([0-9A-F]+):/) {
 			next unless $config->{gpg}->{$1}; # target not on map
 			next if $key eq $1; # self-sig
-			$config->{gpg_links}->{$key}->{$1} = 1;
+			$config->{gpg_links}->{$1}->{$key} = 1;
 		} else {
 			warn "unknown gpg output: $_";
 		}
@@ -95,6 +97,7 @@ if($config->{gpg}) { # there are gpg keys
 	foreach my $key (keys %{$config->{gpg_links}}) {
 		foreach my $target (keys %{$config->{gpg_links}->{$key}}) {
 			my ($arrow, $color);
+			# TODO: compute uni/bidi for markers instead of keys (for people with more than one key)
 			if($config->{gpg_links}->{$target}->{$key}) { # bidirectional link
 				next if $target gt $key; # process only once
 				$color = $config->{link_color};

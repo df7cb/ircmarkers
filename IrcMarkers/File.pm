@@ -36,9 +36,13 @@ sub parse_options {
 	while($opt) { # loop over options
 		$opt =~ s/^\s+|#.*//g;
 		last unless $opt;
-		if($opt =~ s/gpg:([0-9a-fx]+)//gi) {
-			$config->{gpg}->{uc $1} = $marker;
-			$config->{gpg_not_found}->{uc $1} = $marker;
+		if($opt =~ s/gpg:([0-9a-fx]+)//i) {
+			my $k = uc $1;
+			if($config->{gpg}->{$k} and $config->{gpg}->{$k} ne $marker) {
+				warn "$config->{file}.$.: key $k already associated with $config->{gpg}->{$k}, overwriting with $marker\n";
+			}
+			$config->{gpg}->{$k} = $marker;
+			$config->{gpg_not_found}->{$k} = $marker;
 		} else {
 			warn "$config->{file}.$.: unknown option: $opt\n";
 			last;
@@ -112,7 +116,7 @@ sub read {
 			$lon =~ s/,/./;
 			$config->{markers}->{$marker}->{lat} = $lat;
 			$config->{markers}->{$marker}->{lon} = $lon;
-			$config->parse_options($marker, $opt) if $opt;
+			$config->parse_options($marker, $opt);
 		} elsif(/^"([^"]*)"(.*)/) { # marker with options
 			my ($marker, $opt) = ($1, $2);
 			$config->parse_options($marker, $opt);
