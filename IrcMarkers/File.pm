@@ -28,9 +28,28 @@ sub new {
 	bless $config;
 }
 
+sub parse_options {
+	my $config = shift;
+	my $marker = shift;
+	my $opt = shift;
+	while($opt) {
+		$opt =~ s/^ +|#.*//;
+		last unless $opt;
+		if($opt =~ s/gpg:([0-9a-fx]+)//gi) {
+			#push @{$config->{markers}->{$marker}->{gpg}}, $1;
+			$config->{gpg}->{uc $1} = $marker;
+			$config->{gpg_not_found}->{uc $1} = $marker;
+		} else {
+			warn "$config->{file}.$.: unknown option: $opt\n";
+			next;
+		}
+	}
+}
+
 sub read {
 	my $config = shift;
 	my $file = shift || die "read: no filename";
+	$config->{file} = $file;
 
 	my $fh = IO::File->new($file) or die "$file: $!";
 	while (<$fh>) {
@@ -53,7 +72,7 @@ sub read {
 		} elsif(/^(lat|south_north) (.+)\/(.+)/) {
 			$config->{south} = $2;
 			$config->{north} = $3;
-		} elsif(/^projection (.+)/) {
+		} elsif(/^projection (mercator|sinusoidal)/) {
 			$config->{projection} = $1;
 		} elsif(/^center_lon (.+)/) {
 			$config->{center_lon} = $1;
@@ -78,16 +97,19 @@ sub read {
 		} elsif(/^overlap_correction (.+)/) {
 			$config->{overlap_correction} = $1;
 		} elsif(/^([\d.,-]+)\s+([\d.,-]+)\s+"([^"]*)"(.*)/) { # xplanet marker file format
-			my ($lat, $lon, $text, $opt) = ($1, $2, $3, $4);
+			my ($lat, $lon, $marker, $opt) = ($1, $2, $3, $4);
 			$lat =~ s/,/./;
 			$lon =~ s/,/./;
-			$config->{markers}->{$text}->{lat} = $lat;
-			$config->{markers}->{$text}->{lon} = $lon;
-			$opt =~ s/^ +|#.*//;
+			$config->{markers}->{$marker}->{lat} = $lat;
+			$config->{markers}->{$marker}->{lon} = $lon;
+			$config->parse_options($marker, $opt) if $opt;
+		} elsif(/^"([^"]*)"(.+)/) { # marker with options
+			my ($marker, $opt) = ($1, $2);
+			$config->parse_options($marker, $opt);
 		} elsif(/"([^"]*)" -> "([^"]*)"/) {
 			$config->{links}->{$1}->{$2} = 1;
 		} else {
-			warn "$file.$.: unknown format\n";
+			warn "$file.$.: unknown format: $_\n";
 		}
 	}
 	close $fh;

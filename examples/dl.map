@@ -9,9 +9,10 @@ overlap_correction 1
 #label_border 255 255 255
 #label_border off
 
-#include "examples/debian.de"
+#"Myon" -> "youam"
+#"Myon" -> "weasel"
+#"Myon" -> "codebreaker"
+#"weasel" -> "youam"
 
-"Myon" -> "youam"
-"Myon" -> "weasel"
-"Myon" -> "codebreaker"
-"weasel" -> "youam"
+#include "examples/debian.de"
+#include "examples/debian.de.keys"

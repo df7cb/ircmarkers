@@ -61,14 +61,58 @@ my $map = IrcMarkers::Map->new($config);
 
 foreach my $marker (keys %{$config->{markers}}) {
 	#print "$marker at $config->{markers}->{$marker}->{lon}/$config->{markers}->{$marker}->{lat}\n";
-	$map->add($config->{markers}->{$marker}->{lon},
-		$config->{markers}->{$marker}->{lat},
-		$marker);
+	$map->add($config->{markers}->{$marker}->{lon}, $config->{markers}->{$marker}->{lat}, $marker);
+	#if($config->{markers}->{$marker}->{gpg}) {
+	#		$map->add($config->{markers}->{$marker}->{lon}, $config->{markers}->{$marker}->{lat},
+	#		$config->{markers}->{$marker}->{gpg}[0]);
+	#}
+}
+
+if($config->{gpg}) { # there are gpg keys
+	my $keys = join ' ', keys %{$config->{gpg}};
+	open GPG, "gpg --list-sigs --with-colon --fixed-list-mode --fast-list-mode $keys |" or die "gpg: $!";
+	my $key;
+	while(<GPG>) {
+		chomp;
+		next if /^(rev|sub|tru|uat):/;
+		if(/^pub::\d+:\d+:([0-9A-F]+):/) {
+			$key = $1;
+			warn "$key not related to any marker - did you use the long (16 char) keyid?\n" unless $config->{gpg}->{$key};
+			delete $config->{gpg_not_found}->{$key};
+		} elsif(/^sig:::\d+:([0-9A-F]+):/) {
+			next unless $config->{gpg}->{$1}; # target not on map
+			next if $key eq $1; # self-sig
+			$config->{gpg_links}->{$key}->{$1} = 1;
+		} else {
+			warn "unknown gpg output: $_";
+		}
+	}
+
+	foreach my $key (keys %{$config->{gpg_not_found}}) {
+		warn "$config->{gpg_not_found}->{$key}: key $key was not found in gpg's keyring\n";
+	}
+
+	foreach my $key (keys %{$config->{gpg_links}}) {
+		foreach my $target (keys %{$config->{gpg_links}->{$key}}) {
+			my $arrow = "-->";
+			if($config->{gpg_links}->{$target}->{$key}) {
+				next if $target gt $key; # process only once
+				$arrow = "<->";
+			}
+			next unless $config->{markers}->{$config->{gpg}->{$key}}->{lat};
+			next unless $config->{markers}->{$config->{gpg}->{$target}}->{lat};
+			#next unless $config->{gpg}->{$key} and $config->{gpg}->{$target};
+			$map->link($config->{gpg}->{$key}, $config->{gpg}->{$target});
+			print "$config->{gpg}->{$key} $arrow $config->{gpg}->{$target}\n" unless $config->{quiet};
+		}
+	}
 }
 
 foreach my $link (keys %{$config->{links}}) {
 	#print "$marker at $config->{markers}->{$marker}->{lon}/$config->{markers}->{$marker}->{lat}\n";
+	next unless $config->{markers}->{$link};
 	foreach my $target (keys %{$config->{links}->{$link}}) {
+		next unless $config->{markers}->{$target};
 		$map->link($link, $target);
 	}
 }

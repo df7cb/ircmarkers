@@ -77,6 +77,8 @@ sub new {
 		die("ERROR: ".$config->{projection}.": This projection system is not supported yet.");
 	}
 
+	$config->{LABELS} = [];
+
 	die "font not found: $config->{font}" unless -f $config->{font};
 
 	bless $config, $class;
@@ -135,8 +137,6 @@ sub add {
 
 sub link {
 	my ($config, $link, $target) = @_;
-
-	my ($x, $y) = ($config->{markers}->{$link}->{x}, $config->{markers}->{$link}->{y});
 
 	# Pixels are supposed to be unsigned integers, sprintf rounds to nearest.
 	my $newlink = IrcMarkers::Marker->new_line($config->{markers}->{$link}->{x},
