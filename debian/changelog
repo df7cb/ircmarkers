@@ -1,8 +1,13 @@
 ircmarkers (0.6) unstable; urgency=low
 
   * Could previously not draw markers with lat = 0.
+  * Add support for HTML image maps.
+  * Marker labels do not have to be unique anymore.
+  * Compute better bounding box.
+  * Compute links per marker instead per key.
+  * Code cleanup.
 
- -- Christoph Berg <cb@df7cb.de>  Sat,  2 Oct 2004 17:33:33 +0200
+ -- Christoph Berg <cb@df7cb.de>  Mon,  1 Nov 2004 15:02:40 +0100
 
 ircmarkers (0.5) unstable; urgency=low
 

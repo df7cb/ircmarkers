@@ -28,7 +28,6 @@ use strict;
 use warnings;
 use GD;
 use IPC::Open2;
-use IrcMarkers::Marker;
 
 # Some file-global vars
 my $pi = 3.1415926535898;
@@ -124,7 +123,6 @@ sub new {
 		$config->{xres} = ($config->{east} - $config->{west}) / $config->{w};
 		$config->{yres} = ($config->{north} - $config->{south}) / $config->{h};
 	} elsif ($config->{projection} eq 'sinusoidal') {
-		#die "center_lon is not between lon coordinates" if $config->{center_lon} < $config->{west} or $config->{center_lon} > $config->{east};
 		die "center_lon must be defined for sinusoidal maps" unless defined $config->{center_lon};
 		# These 2 are not in pixels, but in absolute coordinates. To get pixels, they should be multiplied by $xres.
 		$config->{Xleft} = ($config->{west} - $config->{center_lon}) * cos($config->{north} * $degtorad);
@@ -167,47 +165,15 @@ sub coord2pixel {
 	return ($x, $y, $vis);
 }
 
-sub add {
-	my($config, $marker) = @_;
-
-	my $dot = {
-		shape => $config->{markers}->{$marker}->{dot_shape}, # can be either 'dot' or 'circle'
-		colour => $config->{markers}->{$marker}->{dot_color}, # RGB data
-		thickness => $config->{markers}->{$marker}->{dot_size}, # radius
-		border => $config->{markers}->{$marker}->{dot_border}
-	};
-	my $label = {
-		text => $marker, # The text displayed
-		colour => $config->{markers}->{$marker}->{label_color}, # RGB data
-		border => $config->{markers}->{$marker}->{label_border},
-		fontpath => $config->{markers}->{$marker}->{font}, # Absolute path to the .ttf font file
-		fontsize => $config->{markers}->{$marker}->{ptsize}, # Font size, unity is "points"
-	};
-
-	my($x, $y, $vis) = $config->coord2pixel($config->{markers}->{$marker}->{lat}, $config->{markers}->{$marker}->{lon});
-	$config->{markers}->{$marker}->{x} = $x;
-	$config->{markers}->{$marker}->{y} = $y;
-	return unless $vis;
-	$config->{markers}->{$marker}->{visible} = 1;
-
-	print "$label->{text} at $config->{markers}->{$marker}->{lat}, $config->{markers}->{$marker}->{lon} ($y, $x)\n" unless $config->{quiet};
-
-	my $newlabel = new IrcMarkers::Marker ($x, $y, $dot, $label, $config->{IMAGE});
-	push @{$config->{LABELS}}, $newlabel;
-}
-
-sub link {
-	my ($config, $link, $target, $link_color) = @_;
-
-	my $newlink = IrcMarkers::Marker->new_line($config->{markers}->{$link}->{x},
-		$config->{markers}->{$link}->{y},
-		$config->{markers}->{$target}->{x},
-		$config->{markers}->{$target}->{y}, $link_color);
-	if($link_color->[0] eq $config->{link_color}->[0]) {
-		push @{$config->{LINKS}}, $newlink;
-	} else {
-		unshift @{$config->{LINKS}}, $newlink; # draw sign1 links before sign2
-	}
+sub labelsize {
+	my $config = shift;
+	my $label = shift;
+	# Calculate the label bounds needed later by the overlap corrector
+	my @tmp = GD::Image->stringFT($config->{IMAGE}->colorResolve(0, 0, 0),
+					$label->{font}, $label->{ptsize}, 0,
+					0, 0, $label->{text});
+					#$label->{labelx}, $label->{labely}, $label->{text});
+	$label->{LABEL_BOUNDS} = \@tmp;
 }
 
 sub compute_overlap {
@@ -216,24 +182,24 @@ sub compute_overlap {
 	# We execute the program in order to be able to read its output
 	# 3 is the offset: space between dot and text
 
-	my $command = $config->{overlap} . " " . (scalar @{$config->{LABELS}}) . " " . $config->{w} . " " . $config->{h} . " 3";
+	my $command = sprintf "$config->{overlap} $config->{w} $config->{h} 3";
 
-	my($rdrfh, $wtrfh);
 	my $pid = open2(\*R, \*W, $command) or die "open2: $!";
 
-	my $m = 0;
-	map {
-		my $ref = $_->{LABEL_BOUNDS};
+	for(my $m = 0; $m < @{$config->{markers}}; $m++) {
+		my $marker = $config->{markers}->[$m];
+		next unless $marker->{visible};
+		my $ref = $marker->{LABEL_BOUNDS} or die;
 		printf W ("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-					$m++,
-					$_->{X},
-					$_->{Y},
-					$_->{X} - $_->{DOT}->{thickness},
-					$_->{X} + $_->{DOT}->{thickness},
-					$_->{Y} - $_->{DOT}->{thickness},
-					$_->{Y} + $_->{DOT}->{thickness},
-					2 * $_->{DOT}->{thickness},
-					2 * $_->{DOT}->{thickness},
+					$m,
+					$marker->{x},
+					$marker->{y},
+					$marker->{x} - $marker->{dot_size},
+					$marker->{x} + $marker->{dot_size},
+					$marker->{y} - $marker->{dot_size},
+					$marker->{y} + $marker->{dot_size},
+					2 * $marker->{dot_size},
+					2 * $marker->{dot_size},
 					$ref->[0], # left x
 					$ref->[2], # right x
 					$ref->[5], # upper y
@@ -241,41 +207,33 @@ sub compute_overlap {
 					$ref->[2] - $ref->[0], # width
 					$ref->[1] - $ref->[5]  # height
 		);
-	} @{$config->{LABELS}};
+	}
 	close(W);
 
 	# Analyse the output
 	while (<R>) {
-		/(\d+)\t([+-]\d+)\t([+-]\d+)/;
-		$config->{LABELS}->[$1]->{LABELX} = $2;
-		$config->{LABELS}->[$1]->{LABELY} = $3; #While imlib uses top, gd uses bottom
+		/(\d+)\t([+-]\d+)\t([+-]\d+)/ or warn "unknown overlap output: $_";
+		$config->{markers}->[$1]->{labelx} = $2;
+		$config->{markers}->[$1]->{labely} = $3;
 	}
-	# Clean all this shit
 	close(R);
 }
 
-sub draw {
-	my $config = shift;
-	my $image = $config->{IMAGE};
-	map { $_->draw_line($image); } @{$config->{LINKS}};
-	map { $_->draw_dot($image); } @{$config->{LABELS}};
-	map { $_->draw_label($image) } @{$config->{LABELS}};
-}
-
 sub draw_label_new {
-	my ($config, $item) = @_;
+	my ($config, $item, $geom_args) = @_;
 	my ($x, $y, $text) = (
-		$item->{x},        # label upper left abscissa
-		$item->{y},        # label upper ordinate
+		$item->{labelx},        # label upper left abscissa
+		$item->{labely},        # label upper ordinate
 		$item->{text}
 	);
 	my $image = $config->{IMAGE};
 	my $font = $item->{font} || $config->{font};
 	my $fontsize = $item->{ptsize} || $config->{ptsize};
 
-	my @bounds = GD::Image->stringFT($image->colorResolve(0, 0, 0), $font, $fontsize, 0, 0, 0, $text);
-	$x = $x =~ /^-/ ? $config->{w} + $x - $bounds[2] : $x;
-	$y = $y =~ /^-/ ? $config->{h} + $y : $y - $bounds[5];
+	if($geom_args) {
+		$item->{labelx} = $x = $x =~ /^-/ ? $config->{w} + $x - $item->{LABEL_BOUNDS}->[2] : $x;
+		$item->{labely} = $y = $y =~ /^-/ ? $config->{h} + $y : $y - $item->{LABEL_BOUNDS}->[5];
+	}
 
 	my $b = $item->{label_border} ? $item->{label_border} : $config->{label_border};
 	if (ref $b) { # might be -1
@@ -292,7 +250,29 @@ sub draw_label_new {
 
 	# And finally draw the text in the middle
 	my $fontcolor = $image->colorResolve(@{$item->{label_color} || $config->{label_color}});
-	$image->stringFT($fontcolor, $font, $fontsize, 0, $x, $y, $text);
+	my @bounds = $image->stringFT($fontcolor, $font, $fontsize, 0, $x, $y, $text);
+	$item->{LABEL_BOUNDS} = \@bounds; # save bounds for imagemap
+}
+
+sub draw_dot_new {
+	my($config, $marker) = @_;
+	my ($x, $y, $image) = ($marker->{x}, $marker->{y}, $config->{IMAGE});
+
+	my $dotcolour = $image->colorResolve(@{$marker->{dot_color}});
+	my $dotborder = (ref $marker->{dot_border} ? $image->colorResolve(@{$marker->{dot_border}}) : undef);
+
+	if ($marker->{dot_shape} eq 'dot') {
+		# core of the dot
+		# draw concentric circles until the requested radius is reached
+		for (my $rayon = 0; $rayon <= $marker->{dot_size}; $rayon++) {
+			$image->arc($x, $y, $rayon, $rayon, 0, 360, $dotcolour);
+		}
+		$image->arc($x,$y, $marker->{dot_size}+1, $marker->{dot_size}+1, 0, 360, $dotborder) if defined $dotborder;
+	} else { # circle
+		$image->arc($x,$y, $marker->{dot_size}+1, $marker->{dot_size}+1, 0, 360, $dotborder) if defined $dotborder;
+		$image->arc($x,$y, $marker->{dot_size}, $marker->{dot_size}, 0, 360, $dotcolour);
+		$image->arc($x,$y, $marker->{dot_size}+1, $marker->{dot_size}+1, 0, 360, $dotborder) if defined $dotborder;
+	}
 }
 
 sub set_line_style {
@@ -345,14 +325,35 @@ sub write {
 sub compute_boundingbox { # compute bounding box
 	my $config = shift;
 	my $item = shift;
-	warn "$item->{y}, $item->{x}" unless defined $item->{y} and defined $item->{x};
-	my ($y, $x) = ($item->{y}, $item->{x});
-	$y = $config->{h} + $y if $y < 0;
-	$x = $config->{w} + $x if $x < 0;
-	$config->{min_x} = $x if not defined $config->{min_x} or $x < $config->{min_x};
-	$config->{max_x} = $x if not defined $config->{max_x} or $x > $config->{max_x};
-	$config->{min_y} = $y if not defined $config->{min_y} or $y < $config->{min_y};
-	$config->{max_y} = $y if not defined $config->{max_y} or $y > $config->{max_y};
+	warn "box?" unless my $ref = $item->{LABEL_BOUNDS};
+	#$y = $config->{h} + $y if $y < 0;
+	#$x = $config->{w} + $x if $x < 0;
+	$config->{min_x} = $ref->[0] if not defined $config->{min_x} or $ref->[0] < $config->{min_x};
+	$config->{max_x} = $ref->[2] if not defined $config->{max_x} or $ref->[2] > $config->{max_x};
+	$config->{min_y} = $ref->[5] if not defined $config->{min_y} or $ref->[5] < $config->{min_y};
+	$config->{max_y} = $ref->[1] if not defined $config->{max_y} or $ref->[1] > $config->{max_y};
+}
+
+sub write_imagemap {
+	my $config = shift;
+	open MAP, ">$config->{imagemap}" or die "$config->{imagemap}: $!";
+	my $mapname = $config->{write};
+	$mapname =~ /([^\/]+)\.[^\/.]+$/; # get basename
+	$mapname = $1 if $1;
+	print MAP "<map name=\"$mapname\">\n";
+	foreach my $marker (@{$config->{markers}}, @{$config->{yxlabels}}) {
+		next unless $marker->{href} and $marker->{LABEL_BOUNDS};
+		my $ref = $marker->{LABEL_BOUNDS};
+		printf MAP "<area shape=\"rect\" coords=\"%d,%d,%d,%d\" href=\"%s\" alt=\"%s\" />\n",
+			$ref->[6], # left x
+			$ref->[7], # upper y
+			$ref->[2], # right x
+			$ref->[3], # lower y
+			$marker->{href},
+			$marker->{text};
+		}
+	print MAP "</map>\n";
+	close MAP;
 }
 
 # transitional stub

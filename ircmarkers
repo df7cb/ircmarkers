@@ -32,9 +32,6 @@ use Getopt::Long;
 use IrcMarkers::File;
 use IrcMarkers::Map;
 
-# Debug
-#use Data::Dumper;
-
 my $VERSION = "0.6";
 
 sub VERSION_MESSAGE {
@@ -85,10 +82,13 @@ die "no output map" unless $config->{write};
 
 my $map = IrcMarkers::Map->new($config);
 
-foreach my $marker (keys %{$config->{markers}}) {
-	my $item = $config->{markers}->{$marker};
-	$map->add($marker) if defined $item->{lat};
-	$config->compute_boundingbox($item) if $item->{visible};
+foreach my $marker (@{$config->{markers}}) {
+	($marker->{x}, $marker->{y}, $marker->{visible}) = $config->coord2pixel($marker->{lat}, $marker->{lon});
+	($marker->{labelx}, $marker->{labely}) =
+		($marker->{x} + $marker->{dot_size} + 3, $marker->{y} + $marker->{dot_size});
+	# TODO: make '3' configurable?
+	next unless $marker->{visible};
+	print "$marker->{text} at $marker->{lat}, $marker->{lon} ($marker->{y}, $marker->{x})\n" unless $config->{quiet};
 }
 
 if($config->{link_color} and $config->{gpg}) {
@@ -97,40 +97,48 @@ if($config->{link_color} and $config->{gpg}) {
 
 $config->set_line_style();
 if($config->{links}) {
-	foreach my $nr (0 .. @{$config->{links}} - 1) {
-		my $link = $config->{links}->[$nr];
-		print "$link->{src} <-> $link->{dst}\n" unless $config->{quiet};
-		#$map->link($link->{src}, $link->{dst}, $link->{link_color});
-		$link->{x0} = $config->{markers}->{$link->{src}}->{x};
-		$link->{y0} = $config->{markers}->{$link->{src}}->{y};
-		$link->{x1} = $config->{markers}->{$link->{dst}}->{x};
-		$link->{y1} = $config->{markers}->{$link->{dst}}->{y};
+	foreach my $link (@{$config->{links}}) {
+		print "$config->{markers}->[$link->{src}]->{text} $link->{arrow} $config->{markers}->[$link->{dst}]->{text}\n" unless $config->{quiet};
+		$link->{x0} = $config->{markers}->[$link->{src}]->{x};
+		$link->{y0} = $config->{markers}->[$link->{src}]->{y};
+		$link->{x1} = $config->{markers}->[$link->{dst}]->{x};
+		$link->{y1} = $config->{markers}->[$link->{dst}]->{y};
 		$config->draw_line_new($link);
 	}
 }
-#foreach my $link (keys %{$config->{links}}) {
-#	next unless $config->{markers}->{$link};
-#	foreach my $target (keys %{$config->{links}->{$link}}) {
-#		next unless $config->{markers}->{$target};
-#		print "$link <-> $target\n" unless $config->{quiet};
-#		$map->link($link, $target, $config->{link_color});
-#	}
-#}
 
-$map->compute_overlap() if($config->{overlap_correction});
-$map->draw();
+if($config->{markers}) {
+	foreach my $marker (@{$config->{markers}}) {
+		next unless $marker->{visible};
+		$config->labelsize($marker);
+		$map->draw_dot_new($marker);
+	}
+	$map->compute_overlap() if($config->{overlap_correction});
+	foreach my $marker (@{$config->{markers}}) {
+		next unless $marker->{visible};
+		$map->draw_label_new($marker);
+		$config->compute_boundingbox($marker);
+	}
+}
 if($config->{yxlabels}) {
-	foreach my $nr (0 .. @{$config->{yxlabels}} - 1) {
-		my $label = $config->{yxlabels}->[$nr];
-		print "label \"$label->{text}\" at $label->{y}, $label->{x}\n";
-		$map->draw_label_new($label);
+	foreach my $label (@{$config->{yxlabels}}) {
+		print "label \"$label->{text}\" at $label->{labely}, $label->{labelx}\n"
+			unless $config->{quiet};
+		$config->labelsize($label);
+		$map->draw_label_new($label, 1);
 		$config->compute_boundingbox($label);
 	}
 }
 $map->write($config->{write});
 
+if($config->{imagemap}) {
+	$map->write_imagemap();
+}
+
 if(not $config->{quiet} and defined $config->{min_x}) {
-	print "Area used by markers is (approximately): ".
+	$config->{max_y} = $config->{h} if $config->{max_y} > $config->{h};
+	$config->{max_x} = $config->{w} if $config->{max_x} > $config->{w};
+	print "Area used by markers is: ".
 		"y: $config->{min_y}..$config->{max_y} ".
 		"x: $config->{min_x}..$config->{max_x}\n";
 }
@@ -258,9 +266,9 @@ label_border 0 0 0. The border can be removed by specifying the "none" color.
 Full pathname to the .ttf font used for the labels. Default is
 font F</usr/share/ircmarkers/fixed_01.ttf>.
 
-=item ptsize I<size>
+=item fontsize|ptsize I<size>
 
-Size in points of the labels. Default is ptsize 6.
+Size in points of the labels. Default is fontsize 6.
 
 =item dot_color I<R G B>
 
@@ -276,6 +284,10 @@ Size of the dots. Default is 2.
 =item dot_shape dot|circle
 
 Dots are filled (dot) or hollow (circle). Default is dot.
+
+=item href I<link>
+
+Link target to use in an imagemap.
 
 =back
 
@@ -346,6 +358,12 @@ link_outside off.
 
 Color of the lines drawn for uni-directional GnuPG/PGP signatures. Default is
 link_color none.
+
+=item imagemap F<file>
+
+Write HTML image map to F<file>. The map contains areas for all markers and
+labels with a href option. The name of the imagemap is the basename of the
+output map with the extension stripped.
 
 =item overlap F<overlapcorrector>
 

@@ -70,22 +70,29 @@ sub default_options { # this will be obsolete if all items are deOOified
 	$item->{link_color} ||= $config->{link_color}; # only for links
 }
 
+sub parser_warn {
+	my $config = shift;
+	my $text = shift;
+	my $loc = $config->{file} ? "$config->{file}:$." : "-o";
+	warn "$loc: unknown option: $text\n";
+}
+
 sub parse_options {
 	my $config = shift;
 	my $item = shift;
 	die "huh?" unless ref $item;
-	my $marker = shift; # defined for markers, undef for yxlabels/links
+	my $markernr = shift; # defined for markers, undef for yxlabels/links
 	my $opt = shift;
 	while($opt ne '') { # loop over options
 		$opt =~ s/^\s+|#.*//g;
 		last unless $opt ne '';
-		if($marker and $opt =~ s/^gpg[ :](?:0x)?([0-9a-f]{16})//i) { # ':' is deprecated old syntax
+		if(defined $markernr and $opt =~ s/^gpg[ :](?:0x)?([0-9a-f]{16})//i) { # ':' is deprecated old syntax
 			my $k = uc $1;
-			if($config->{gpg}->{$k} and $config->{gpg}->{$k} ne $marker) {
-				warn "$config->{file}.$.: key $k already associated with $config->{gpg}->{$k}, overwriting with $marker\n";
+			if($config->{gpg}->{$k} and $config->{gpg}->{$k} ne $markernr) {
+				warn "$config->{file}.$.: key $k already associated with $config->{gpg}->{$k}, overwriting with $markernr\n";
 			}
-			$config->{gpg}->{$k} = $marker;
-			$config->{gpg_not_found}->{$k} = $marker;
+			$config->{gpg}->{$k} = $markernr;
+			$config->{gpg_not_found}->{$k} = $markernr;
 		# local options
 		} elsif($opt =~ s/^dot_colou?r (\d+) (\d+) (\d+)//) {
 			$item->{dot_color} = [$1, $2, $3];
@@ -107,21 +114,23 @@ sub parse_options {
 			die "font file not found: $1" unless -f $1;
 			$item->{font} = $1;
 			$item->{font} =~ s!^~/!$ENV{HOME}/!;
-		} elsif($opt =~ s/^ptsize (\d+)//) {
+		} elsif($opt =~ s/^(?:font|pt)size (\d+)//) {
 			$item->{ptsize} = $1;
+		} elsif($opt =~ s/^href (\S+)//) {
+			$item->{href} = $1;
 		} elsif($opt =~ s/^(?:link|sign2)_colou?r (\d+) (\d+) (\d+)//) {
 			$item->{link_color} = [$1, $2, $3];
 		} elsif($opt =~ s/^(?:link|sign2)_colou?r (no(ne?)|off)//) {
 			delete $item->{link_color};
 		# error
 		} else {
-			my $loc = $config->{file} ? "$config->{file}:$." : "-o";
-			warn "$loc: unknown option: $opt\n";
+			$config->parser_warn("unknown option: $opt");
 			last;
 		}
 	}
 }
 
+my $markernr = 0;
 my $labelnr = 0;
 my $linknr = 0;
 sub parse {
@@ -173,6 +182,8 @@ sub parse {
 		delete $config->{sign1_color};
 	} elsif(/^sign1_colou?r (\d+) (\d+) (\d+)$/) {
 		$config->{sign1_color} = [$1, $2, $3];
+	} elsif(/^imagemap (\S+)/) {
+		$config->{imagemap} = $1;
 	} elsif(/^overlap (.+)/) {
 		$config->{overlap} = $1;
 	} elsif(/^overlap_correction (on|yes)/) {
@@ -185,26 +196,39 @@ sub parse {
 		$config->{quiet} = 0;
 	# link
 	} elsif(/"([^"]*)"\s+<?->\s+"([^"]+)"(.*)/) { # -> is old syntax
-		$config->{links}->[$linknr] = { src => $1, dst => $2 };
-		my $opt = $3;
+		my ($src, $dst, $opt) = ($1, $2, $3);
+		my $srcnr = $config->{markerindex}->{$src};
+		my $dstnr = $config->{markerindex}->{$dst};
+		unless(defined $srcnr and defined $dstnr) {
+			$config->parser_warn("both link endpoints must be defined");
+			next;
+		}
+		$config->{links}->[$linknr] = { src => $srcnr, dst => $dstnr, arrow => '<->' };
 		$config->default_options($config->{links}->[$linknr]);
 		$config->parse_options($config->{links}->[$linknr], undef, $opt);
 		$linknr++;
 	# marker definitions
 	} elsif(/^([\d.,-]+) ([\d.,-]+) "([^"]+)"(.*)/) { # xplanet marker file format
-		my ($lat, $lon, $marker, $opt) = ($1, $2, $3, $4);
+		my ($lat, $lon, $text, $opt) = ($1, $2, $3, $4);
 		$lat =~ s/,/./;
 		$lon =~ s/,/./;
-		$config->{markers}->{$marker}->{lat} = $lat;
-		$config->{markers}->{$marker}->{lon} = $lon;
-		$config->default_options($config->{markers}->{$marker});
-		$config->parse_options($config->{markers}->{$marker}, $marker, $opt);
+		$config->{markers}->[$markernr]->{text} = $text;
+		$config->{markers}->[$markernr]->{lat} = $lat;
+		$config->{markers}->[$markernr]->{lon} = $lon;
+		$config->{markerindex}->{$text} = $markernr;
+		$config->default_options($config->{markers}->[$markernr]);
+		$config->parse_options($config->{markers}->[$markernr], $markernr, $opt);
+		$markernr++;
 	} elsif(/^"([^"]*)"(.*)/) { # marker with options
-		my ($marker, $opt) = ($1, $2);
-		$config->{markers}->{$marker} ||= {};
-		$config->parse_options($config->{markers}->{$marker}, $marker, $opt);
+		my ($text, $opt, $i) = ($1, $2);
+		unless(defined ($i = $config->{markerindex}->{$text})) {
+			$config->parser_warn("marker $text not defined yet");
+			return;
+		}
+		$config->{markers}->[$i] ||= {};
+		$config->parse_options($config->{markers}->[$i], $config->{markerindex}->{$text}, $opt);
 	} elsif(/^label ([+-]?\d+) ([+-]?\d+) "([^"]+)"(.*)/) {
-		$config->{yxlabels}->[$labelnr] = { y => $1, x => $2, text => $3 };
+		$config->{yxlabels}->[$labelnr] = { labely => $1, labelx => $2, text => $3 };
 		my $opt = $4;
 		$config->default_options($config->{yxlabels}->[$labelnr]);
 		$config->parse_options($config->{yxlabels}->[$labelnr], undef, $opt);
@@ -237,21 +261,20 @@ sub get_gpg_links {
 	my $config = shift;
 
 	my $keys = join ' ', keys %{$config->{gpg}};
-	#print "gpg --list-sigs --with-colon --fixed-list-mode --fast-list-mode $keys\n";
 	open GPG, "gpg --list-sigs --with-colon --fixed-list-mode --fast-list-mode $keys |" or die "gpg: $!";
-	my $key;
+	my ($key, $src);
 	while(<GPG>) {
 		chomp;
 		next if /^(rev|sub|tru|uat):/;
-		#print "$_\n";
 		if(/^pub::\d+:\d+:([0-9A-F]+):/) {
 			$key = $1;
-			warn "$key not related to any marker - did you use the long (16 char) keyid?\n" unless $config->{gpg}->{$key};
+			warn "$key not related to any marker - did you use the long (16 char) keyid?\n" unless defined $config->{gpg}->{$key};
+			$src = $config->{gpg}->{$key};
 			delete $config->{gpg_not_found}->{$key};
 		} elsif(/^sig:::\d+:([0-9A-F]+):/) {
-			next unless $config->{gpg}->{$1}; # target not on map
+			next unless defined $config->{gpg}->{$1}; # target not on map
 			next if $key eq $1; # self-sig
-			$config->{gpg_links}->{$1}->{$key} = 1;
+			$config->{gpg_links}->{$config->{gpg}->{$1}}->{$src} = 1;
 		} else {
 			warn "unknown gpg output: $_";
 		}
@@ -261,33 +284,23 @@ sub get_gpg_links {
 		warn "$config->{gpg_not_found}->{$key}: key $key was not found in gpg's keyring\n";
 	}
 
-	foreach $key (keys %{$config->{gpg}}) {
-		my $marker = $config->{gpg}->{$key};
-		unless($config->{markers}->{$marker}->{lat}) {
-			warn "$marker was mentioned as key $key, but no coordinates defined\n";
-		}
-	}
-
-	foreach my $key (keys %{$config->{gpg_links}}) {
-		my $source = $config->{gpg}->{$key};
-		next unless $config->{link_outside} or $config->{markers}->{$source}->{visible};
-		foreach my $targetkey (keys %{$config->{gpg_links}->{$key}}) {
-			my $target = $config->{gpg}->{$targetkey};
-			next unless $config->{link_outside} or $config->{markers}->{$target}->{visible};
+	foreach my $source (keys %{$config->{gpg_links}}) {
+		next unless $config->{link_outside} or $config->{markers}->[$source]->{visible};
+		foreach my $target (keys %{$config->{gpg_links}->{$source}}) {
+			next unless $config->{link_outside} or $config->{markers}->[$target]->{visible};
 			my ($arrow, $color);
-			# TODO: compute uni/bidi for markers instead of keys (for people with more than one key)
-			if($config->{gpg_links}->{$targetkey}->{$key}) { # bidirectional link
-				next if $targetkey gt $key; # process only once
+			if($config->{gpg_links}->{$target}->{$source}) { # bidirectional link
+				next if $target gt $source; # process only once
 				$color = $config->{link_color};
 				$arrow = "<->";
 			} else {
 				$color = $config->{sign1_color} or next; # don't draw unidirectional links
 				$arrow = "-->";
 			}
-			next if not defined $config->{markers}->{$source}->{lat};
-			next if not defined $config->{markers}->{$target}->{lat};
-			$config->link($source, $target, $color);
-			print "$source $arrow $target\n" unless $config->{quiet};
+			next if not defined $config->{markers}->[$source]->{lat};
+			next if not defined $config->{markers}->[$target]->{lat};
+			push @{ $config->{links} },
+				{ src => $source, dst => $target, link_color => $color, arrow => $arrow };
 		}
 	}
 }

@@ -1,22 +1,22 @@
 /*
-#    MapMarkers, perl modules to create maps with markers.
-#    Copyright (C) 2002 Guillaume Leclanche (Mo-Ize) <mo-ize@nul-en.info>
-#
-#    2004-07-04: Christoph Berg <cb@df7cb.de>: Modified to read from stdin
-#
-#    This program is free software; you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation; either version 2 of the License, or
-#    (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-#
-#    You should have received a copy of the GNU General Public License
-#    along with this program; if not, write to the Free Software
-#    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * overlap.c is part of IrcMarkers
+ *   Copyright (C) 2004 Christoph Berg <cb@df7cb.de>
+ *
+ *   2004-07-04: Modified to read from stdin
+ *
+ * Original copyright:
+ *   MapMarkers, perl modules to create maps with markers.
+ *   Copyright (C) 2002 Guillaume Leclanche (Mo-Ize) <mo-ize@nul-en.info>
+ *
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
 */
 
 #include <stdio.h>
@@ -47,6 +47,10 @@ struct marker {
     int alignment;
     struct box dot;
     struct box txt;
+#ifdef DEBUG /* FIXME: compiling without DEBUG breaks stuff */
+    int orig_txt_x;
+    int orig_txt_y;
+#endif
 };
 
 static int nb_markers;
@@ -66,55 +70,68 @@ int
 main(int argc, char* argv[])
 {
     register int i = 0;
+    int alloc_markers = 2;
 
     /* invalid number of args */
-    if (argc != 5)
+    if (argc != 4)
     {
         fprintf(stderr, "invalid number of args\n");
         return(1);
     }
 
-    nb_markers = atoi(argv[1]);
-    image_width = atoi(argv[2]);
-    image_height = atoi(argv[3]);
-    offset = atoi(argv[4]);
-    markers = malloc( atoi(argv[1]) * sizeof(struct marker) );
+    nb_markers = 0;
+    image_width = atoi(argv[1]);
+    image_height = atoi(argv[2]);
+    offset = atoi(argv[3]);
+    markers = malloc( alloc_markers * sizeof(struct marker) );
 
     /* Read the data and store them into the struct table */
-    while (i < nb_markers) {
+    for (nb_markers = 0; !feof(stdin); nb_markers++) {
+        if(nb_markers > alloc_markers) {
+            alloc_markers <<= 1;
+            markers = realloc(markers, alloc_markers);
+        }
         scanf("%u\t%u\t%u\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
-                    &(markers[i].id),
-                    &(markers[i].x),
-                    &(markers[i].y),
-                    &(markers[i].dot.left),
-                    &(markers[i].dot.right),
-                    &(markers[i].dot.top),
-                    &(markers[i].dot.bottom),
-                    &(markers[i].dot.width),
-                    &(markers[i].dot.height),
-                    &(markers[i].txt.left),
-                    &(markers[i].txt.right),
-                    &(markers[i].txt.top),
-                    &(markers[i].txt.bottom),
-                    &(markers[i].txt.width),
-                    &(markers[i].txt.height)
+                &(markers[nb_markers].id),
+                &(markers[nb_markers].x),
+                &(markers[nb_markers].y),
+                &(markers[nb_markers].dot.left),
+                &(markers[nb_markers].dot.right),
+                &(markers[nb_markers].dot.top),
+                &(markers[nb_markers].dot.bottom),
+                &(markers[nb_markers].dot.width),
+                &(markers[nb_markers].dot.height),
+                &(markers[nb_markers].txt.left),
+                &(markers[nb_markers].txt.right),
+                &(markers[nb_markers].txt.top),
+                &(markers[nb_markers].txt.bottom),
+                &(markers[nb_markers].txt.width),
+                &(markers[nb_markers].txt.height)
         );
-        i++;
+#ifdef DEBUG
+        markers[nb_markers].orig_txt_x = markers[nb_markers].txt.left;
+        markers[nb_markers].orig_txt_y = markers[nb_markers].txt.bottom;
+#endif
     }
 
     correctOverlap();
 
     /* Now write the resulting data to stdout */
-    i = 0;
-    while (i < nb_markers) {
-        fprintf(stdout, "%u\t%c%d\t%c%d\n",
+    for (i = 0; i < nb_markers; i++) {
+        printf("%u\t%c%d\t%c%d\n",
                     markers[i].id,
                     (markers[i].txt.left > 0 ? '+' : '-'),
                     abs(markers[i].txt.left),
                     (markers[i].txt.bottom > 0 ? '+' : '-'),
                     abs(markers[i].txt.bottom)
         );
-        i++;
+#ifdef DEBUG
+#if 0
+        fprintf(stderr, "label %d moved %+d %+d\n", i,
+                markers[i].orig_txt_x - markers[i].txt.left,
+                markers[i].orig_txt_y - markers[i].txt.bottom);
+#endif
+#endif
     }
 
     return(0); /* give back control to perl */
@@ -124,18 +141,12 @@ static int
 findOverlap(unsigned int id_current)
 {
     int total_overlap = 0;
-    register unsigned int i = 0;
-    while (i < nb_markers)
-    {
-        if (i == id_current)
-        {
-            i++;
-            continue;
+    register unsigned int i;
+    for (i = 0; i < nb_markers; i++) {
+        if (i != id_current) {
+            total_overlap += calcOverlap(markers[id_current].txt, markers[i].txt);
+            total_overlap += calcOverlap(markers[id_current].txt, markers[i].dot);
         }
-
-        total_overlap += calcOverlap(markers[id_current].txt, markers[i].txt);
-        total_overlap += calcOverlap(markers[id_current].txt, markers[i].dot);
-        i++;
     }
     return(total_overlap);
 }
@@ -227,13 +238,12 @@ correctOverlap(void)
                     max_overlap = total_overlap;
                 }
             }
-            else
-            {
-                continue;
-            }
         }
 
         align(markers+p, markers[p].alignment);
         p++;
     }
 }
+
+/* vim:sw=4:et
+ */
