@@ -9,6 +9,9 @@ overlap:
 ircmarkers.1: ircmarkers
 	pod2man --release="$(VERSION)" --center="User Documentation" $< > $@
 
+ircmarkers.html: ircmarkers
+	pod2html --title="$<" $< > $@
+
 install: overlap ircmarkers.1
 	$(INSTALL_PROGRAMM) -D ircmarkers $(DESTDIR)/usr/bin/ircmarkers
 	for pm in IrcMarkers/{File,Map,Marker}.pm ; do \
@@ -19,4 +22,4 @@ install: overlap ircmarkers.1
 	$(INSTALL_PROGRAMM) -D -m 664 ircmarkers.1 $(DESTDIR)/usr/share/man/man1/ircmarkers.1
 
 clean:
-	rm -f overlap ircmarkers.1 tags
+	rm -f overlap ircmarkers.1 ircmarkers.html tags pod2htm*

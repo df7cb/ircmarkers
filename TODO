@@ -8,3 +8,4 @@
 
 * draw links per marker, not per key
 * colors configurable per marker
+* adapt pisg's addalias.pl

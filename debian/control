@@ -1,5 +1,5 @@
 Source: ircmarkers
-Section: net
+Section: graphics
 Priority: optional
 Maintainer: Christoph Berg <cb@df7cb.de>
 Build-Depends: debhelper (>= 4.0.0)
@@ -9,12 +9,9 @@ Package: ircmarkers
 Architecture: any
 Depends: libttf2, libgd-gd2-perl, ${shlibs:Depends}, ${misc:Depends}
 Description: place markers on maps at given coordinates
- IrcMarkers takes a map in .png or .jpg format and a list of coordinates
- and labels in xplanet format and places markers on the map.
- GnuPG/PGP key ids can be associated with each marker, to create "maps of
- trust".
+ IrcMarkers takes a map in .png or .jpg format and a list of coordinates and
+ labels in xplanet format and places markers on the map. It was written to
+ generate user maps of IRC channels. GnuPG/PGP key ids can be associated with
+ each marker, to create "maps of trust".
  .
- It was written to generate user maps of IRC channels.
- IrcMarkers is an improved version of MapMarkers.
- .
- http://www.df7cb.de/projects/ircmarkers/ircmarkers.html
+ http://www.df7cb.de/projects/ircmarkers/

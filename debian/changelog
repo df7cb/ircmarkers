@@ -1,8 +1,11 @@
 ircmarkers (0.2) unstable; urgency=low
 
   * Added view_lat/view_lon (thanks to Alexander Wirt for suggesting this).
+  * Made size of output map configurable.
+  * Added pointers to sites with coordinates to manpage.
+  * Created Debian package (Closes: #262120).
 
- -- Christoph Berg <cb@df7cb.de>  Thu, 29 Jul 2004 21:09:52 +0200
+ -- Christoph Berg <cb@df7cb.de>  Sat, 31 Jul 2004 15:29:25 +0200
 
 ircmarkers (0.1) unstable; urgency=low
 

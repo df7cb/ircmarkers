@@ -358,11 +358,23 @@ None known.
 
 =head1 SEE ALSO
 
+=head2 Library used
+
 =over
 
 =item *
 
-MapMarkers: http://www.nul-en.info/mapmarkers/
+L<GD(3)> - GD version 2
+
+=back
+
+=head2 Programs similar to IrcMarkers
+
+=over
+
+=item *
+
+MapMarkers: http://www.nul-en.info/mapmarkers/ - IrcMarkers' predecessor
 
 =item *
 
@@ -371,6 +383,28 @@ xplanet: http://xplanet.sourceforge.net/
 =item *
 
 Image::WorldMap: http://www.astray.com/WorldMap/
+
+=back
+
+=head2 Locating coordinates
+
+=over
+
+=item *
+
+http://www.multimap.com/ - online maps to everywhere
+
+=item *
+
+http://www.calle.com/world/ - directory of cities and towns in world
+
+=item *
+
+http://tiger.census.gov/cgi-bin/mapbrowse-tbl - United States
+
+=item *
+
+http://www.ckdhr.com/dns-loc/finding.html - more pointers
 
 =back
 
