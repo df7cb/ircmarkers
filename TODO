@@ -1,0 +1,10 @@
+* overlap.c:150: (yath: falschrum?)
+   if (label.top > b.bottom || label.bottom < b.top) return(0);
+
+14:39 <yath> Myon: ich hab ne alternative berechnung für overlap.c
+14:39 <yath> overlapX = abs(min(one["right"], two["right"]) - max(one["left"], two["left"]))
+14:39 <yath> overlapY = abs(max(one["bottom"], two["bottom"]) - min(one["top"], two["top"]))
+14:40 <yath> Myon: top/bottom wird von unten gezählt, left/right von links
+
+* draw links per marker, not per key
+* colors configurable per marker

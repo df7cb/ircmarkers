@@ -1,12 +1,25 @@
 #!/usr/bin/perl -w
 #
-# (c) 2004 Christoph Berg <cb@df7cb.de>
+# Copyright (C) 2004 Christoph Berg <cb@df7cb.de>
 #
 # This file was copied from example.pl from the MapMarker distribution:
 #   Author  :  Guillaume Leclanche (Mo-Ize) <mo-ize@nul-en.info>
 #   Version :  2.0 beta 1
 #   Date    :  08 Feb 2003
-# It is licensed under the GNU GPL.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # 2003-12-01 cb: uses @ARGV
 # 2004-07-04 cb: cleaned up code, introduced config file
@@ -95,21 +108,25 @@ if($config->{gpg}) { # there are gpg keys
 	}
 
 	foreach my $key (keys %{$config->{gpg_links}}) {
-		foreach my $target (keys %{$config->{gpg_links}->{$key}}) {
+		my $source = $config->{gpg}->{$key};
+		next unless $config->{link_outside} or $config->{markers}->{$source}->{visible};
+		foreach my $targetkey (keys %{$config->{gpg_links}->{$key}}) {
+			my $target = $config->{gpg}->{$targetkey};
+			next unless $config->{link_outside} or $config->{markers}->{$target}->{visible};
 			my ($arrow, $color);
 			# TODO: compute uni/bidi for markers instead of keys (for people with more than one key)
-			if($config->{gpg_links}->{$target}->{$key}) { # bidirectional link
-				next if $target gt $key; # process only once
+			if($config->{gpg_links}->{$targetkey}->{$key}) { # bidirectional link
+				next if $targetkey gt $key; # process only once
 				$color = $config->{link_color};
 				$arrow = "<->";
 			} else {
 				$color = $config->{sign1_color} or next; # don't draw unidirectional links
 				$arrow = "-->";
 			}
-			next unless $config->{markers}->{$config->{gpg}->{$key}}->{lat};
-			next unless $config->{markers}->{$config->{gpg}->{$target}}->{lat};
-			$map->link($config->{gpg}->{$key}, $config->{gpg}->{$target}, $color);
-			print "$config->{gpg}->{$key} $arrow $config->{gpg}->{$target}\n" unless $config->{quiet};
+			next unless $config->{markers}->{$source}->{lat};
+			next unless $config->{markers}->{$target}->{lat};
+			$map->link($source, $target, $color);
+			print "$source $arrow $target\n" unless $config->{quiet};
 		}
 	}
 }
@@ -123,7 +140,9 @@ foreach my $link (keys %{$config->{links}}) {
 	}
 }
 
-$map->draw($config->{write});
+$map->compute_overlap() if($config->{overlap_correction});
+$map->draw();
+$map->write($config->{write});
 
 __END__
 
@@ -236,6 +255,22 @@ and .wbmp.
 
 Declare input map dimensions. Default is lat -90/90, lon -180/180.
 
+=item view_lat I<south/north>
+
+=item view_south_north I<south/north>
+
+=item view_lon I<west/east>
+
+=item view_west_east I<west/east>
+
+Only show part of the map in the output. Default is to show the whole map.
+
+=item view_width I<pixels>
+
+=item view_height I<pixels>
+
+Size of output map. Default is input map, or size of part selected.
+
 =item projection mercator|sinusoidal
 
 =item center_lon I<center>
@@ -256,6 +291,11 @@ dot_border 0 0 0.
 
 Color of the labels placed on the map. Default is label_color 255 255 0,
 label_border 0 0 0. The border can be removed by specifying the "none" color.
+
+=item link_outside on|off
+
+Whether to draw lines to markers that are not visible on the map. Default is
+link_outside off.
 
 =item link_color I<R G B>
 

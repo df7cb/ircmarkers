@@ -1,7 +1,14 @@
 read examples/dl_half.jpg
-write examples/dl_out.jpg
+write examples/debian.de.jpg
 lat 44/56
 lon 4/20
+
+#link_outside yes
+#view_lat 48.5/56
+#view_lon 5/11
+#view_width 600
+#view_height 600
+
 #overlap_correction on
 #ptsize 12
 #dot_border 255 255 255

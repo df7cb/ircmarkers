@@ -1,4 +1,21 @@
-# (c) 2004 Christoph Berg <cb@df7cb.de>
+# Copyright (C) 2004 Christoph Berg <cb@df7cb.de>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+# 2004-07-04 cb: added links and cleaned up code
+# 2004-07-24 cb: added viewport
 
 package IrcMarkers::File;
 
@@ -7,7 +24,7 @@ use warnings;
 use IO::File;
 
 sub new {
-	my $config = {
+	my $config = { # default values
 		projection => 'mercator',
 		west => -180,
 		north => 90,
@@ -18,6 +35,7 @@ sub new {
 		dot_border => [0, 0, 0],
 		label_color => [255, 255, 0],
 		label_border => [0, 0, 0],
+		link_outside => 0,
 		link_color => [255, 128, 0],
 		#sign1_color => [100, 100, 100],
 		font => '/usr/share/ircmarkers/fixed_01.ttf',
@@ -76,10 +94,22 @@ sub read {
 		} elsif(/^(lat|south_north) (.+)\/(.+)/) {
 			$config->{south} = $2;
 			$config->{north} = $3;
+		} elsif(/^view_(lon|west_east) (.+)\/(.+)/) {
+			$config->{view_west} = $2;
+			$config->{view_east} = $3;
+		} elsif(/^view_(lat|south_north) (.+)\/(.+)/) {
+			$config->{view_south} = $2;
+			$config->{view_north} = $3;
+		} elsif(/^view_width (.+)/) {
+			$config->{view_width} = $1;
+		} elsif(/^view_height (.+)/) {
+			$config->{view_height} = $1;
 		} elsif(/^projection (mercator|sinusoidal)/) {
 			$config->{projection} = $1;
 		} elsif(/^center_lon (.+)/) {
 			$config->{center_lon} = $1;
+		#} elsif(/^output_width (.+)/) {
+		#	$config->{output_width} = $1;
 		} elsif(/^dot_colou?r (\d+) (\d+) (\d+)$/) {
 			$config->{dot_color} = [$1, $2, $3];
 		} elsif(/^dot_border (\d+) (\d+) (\d+)$/) {
@@ -90,6 +120,10 @@ sub read {
 			delete $config->{label_border};
 		} elsif(/^label_border (\d+) (\d+) (\d+)$/) {
 			$config->{label_border} = [$1, $2, $3];
+		} elsif(/^link_outside (on|yes)/) {
+			$config->{link_outside} = 1;
+		} elsif(/^link_outside (off|no)/) {
+			$config->{link_outside} = 0;
 		} elsif(/^(?:link|sign2)_colou?r (\d+) (\d+) (\d+)$/) {
 			$config->{link_color} = [$1, $2, $3];
 		} elsif(/^sign1_colou?r (no|off|none)$/) {
@@ -98,6 +132,7 @@ sub read {
 			$config->{sign1_color} = [$1, $2, $3];
 		} elsif(/^font (.+)/) {
 			$config->{font} = $1;
+			die "font file not found: $config->{font}" unless -f $config->{font};
 		} elsif(/^ptsize (.+)/) {
 			$config->{ptsize} = $1;
 		} elsif(/^overlap (.+)/) {
