@@ -75,7 +75,6 @@ sub new {
 	die "latitude range greater than 360 degrees" if $config->{east} - $config->{west} > 360;
 	die "southern longitude greater than northern" if $config->{south} >= $config->{north};
 	die "longitude range greater than 180 degrees" if $config->{north} - $config->{south} > 180;
-	die "center_lon is not between lon coordinates" if $config->{projection} eq 'sinusoidal' and $config->{center_lon} < $config->{west} or $config->{center_lon} > $config->{east};
 
 	# handle view_*
 	if ($config->{view_west} or $config->{view_south} or $config->{view_width} or $config->{view_height}) {
@@ -125,7 +124,8 @@ sub new {
 		$config->{xres} = ($config->{east} - $config->{west}) / $config->{w};
 		$config->{yres} = ($config->{north} - $config->{south}) / $config->{h};
 	} elsif ($config->{projection} eq 'sinusoidal') {
-		die "center_lon is not between lon coordinates" if $config->{center_lon} < $config->{west} or $config->{center_lon} > $config->{east};
+		#die "center_lon is not between lon coordinates" if $config->{center_lon} < $config->{west} or $config->{center_lon} > $config->{east};
+		die "center_lon must be defined for sinusoidal maps" unless defined $config->{center_lon};
 		# These 2 are not in pixels, but in absolute coordinates. To get pixels, they should be multiplied by $xres.
 		$config->{Xleft} = ($config->{west} - $config->{center_lon}) * cos($config->{north} * $degtorad);
 		$config->{Xright}  = ($config->{east} - $config->{center_lon}) * cos($config->{south} * $degtorad);
@@ -262,7 +262,7 @@ sub draw {
 
 sub draw_label_new {
 	my ($config, $item) = @_;
-	my ($labelx, $labely, $text) = (
+	my ($x, $y, $text) = (
 		$item->{x},        # label upper left abscissa
 		$item->{y},        # label upper ordinate
 		$item->{text}
@@ -271,22 +271,26 @@ sub draw_label_new {
 	my $font = $item->{font} || $config->{font};
 	my $fontsize = $item->{ptsize} || $config->{ptsize};
 
+	my @bounds = GD::Image->stringFT($image->colorResolve(0, 0, 0), $font, $fontsize, 0, 0, 0, $text);
+	$x = $x =~ /^-/ ? $config->{w} + $x - $bounds[2] : $x;
+	$y = $y =~ /^-/ ? $config->{h} + $y : $y - $bounds[5];
+
 	my $b = $item->{label_border} ? $item->{label_border} : $config->{label_border};
 	if (ref $b) { # might be -1
 		my $bordercolor = $image->colorResolve(@$b);
-		$image->stringFT($bordercolor, $font, $fontsize, 0, $labelx+1, $labely+1, $text);
-		$image->stringFT($bordercolor, $font, $fontsize, 0, $labelx-1, $labely-1, $text);
-		$image->stringFT($bordercolor, $font, $fontsize, 0, $labelx+1, $labely-1, $text);
-		$image->stringFT($bordercolor, $font, $fontsize, 0, $labelx-1, $labely+1, $text);
-		$image->stringFT($bordercolor, $font, $fontsize, 0, $labelx+1, $labely, $text);
-		$image->stringFT($bordercolor, $font, $fontsize, 0, $labelx-1, $labely, $text);
-		$image->stringFT($bordercolor, $font, $fontsize, 0, $labelx, $labely-1, $text);
-		$image->stringFT($bordercolor, $font, $fontsize, 0, $labelx, $labely+1, $text);
+		$image->stringFT($bordercolor, $font, $fontsize, 0, $x+1, $y+1, $text);
+		$image->stringFT($bordercolor, $font, $fontsize, 0, $x-1, $y-1, $text);
+		$image->stringFT($bordercolor, $font, $fontsize, 0, $x+1, $y-1, $text);
+		$image->stringFT($bordercolor, $font, $fontsize, 0, $x-1, $y+1, $text);
+		$image->stringFT($bordercolor, $font, $fontsize, 0, $x+1, $y, $text);
+		$image->stringFT($bordercolor, $font, $fontsize, 0, $x-1, $y, $text);
+		$image->stringFT($bordercolor, $font, $fontsize, 0, $x, $y-1, $text);
+		$image->stringFT($bordercolor, $font, $fontsize, 0, $x, $y+1, $text);
 	}
 
-	# And finally draw the black text in the middle
+	# And finally draw the text in the middle
 	my $fontcolor = $image->colorResolve(@{$item->{label_color} || $config->{label_color}});
-	$image->stringFT($fontcolor, $font, $fontsize, 0, $labelx, $labely, $text);
+	$image->stringFT($fontcolor, $font, $fontsize, 0, $x, $y, $text);
 }
 
 sub write {

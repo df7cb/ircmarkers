@@ -1,3 +1,12 @@
+ircmarkers (0.4) unstable; urgency=low
+
+  * Allow arbitrary whitespace in config (requested by Uli Martens).
+  * Fix center_lon check (requested by Elmar Hoffmann).
+  * Support ~/ in file names.
+  * Support negative label coordinates.
+
+ -- Christoph Berg <cb@df7cb.de>  Tue,  7 Sep 2004 00:44:47 +0200
+
 ircmarkers (0.3) unstable; urgency=low
 
   * Suggests: gnupg.

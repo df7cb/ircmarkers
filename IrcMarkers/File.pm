@@ -23,6 +23,12 @@ use strict;
 use warnings;
 use IO::File;
 
+sub despace {
+	my $s = shift;
+	$s =~ s/\s+/ /g;
+	return $s;
+}
+
 sub new {
 	my $config = { # default values
 		projection => 'mercator',
@@ -30,7 +36,7 @@ sub new {
 		north => 90,
 		east => 180,
 		south => -90,
-		center_lon => 0,
+		#center_lon => 0,
 		dot_color => [255, 255, 255],
 		dot_border => [0, 0, 0],
 		dot_size => 2,
@@ -98,6 +104,7 @@ sub parse_options {
 		} elsif($opt =~ s/^font (\S+)//) {
 			die "font file not found: $1" unless -f $1;
 			$item->{font} = $1;
+			$item->{font} =~ s!^~/!$ENV{HOME}/!;
 		} elsif($opt =~ s/^ptsize (\d+)//) {
 			$item->{ptsize} = $1;
 		# error
@@ -119,13 +126,17 @@ sub parse {
 		$config->read($1);
 		return;
 	}
-	return if /^#/;
+	return if /^\s*#/;
+
+	s/^([^"]+)|([^"]+)$/despace($1)/e; # compress space outside of quotes
 
 	# global options
 	if(/^read (.+)/) {
 		$config->{read} = $1;
+		$config->{read} =~ s!^~/!$ENV{HOME}/!;
 	} elsif(/^write (.+)/) {
 		$config->{write} = $1;
+		$config->{write} =~ s!^~/!$ENV{HOME}/!;
 	} elsif(/^(lon|west_east) (.+)\/(.+)/) {
 		$config->{west} = $2;
 		$config->{east} = $3;
@@ -167,7 +178,7 @@ sub parse {
 	} elsif(/^quiet (off|no)/) {
 		$config->{quiet} = 0;
 	# marker definitions
-	} elsif(/^([\d.,-]+)\s+([\d.,-]+)\s+"([^"]+)"(.*)/) { # xplanet marker file format
+	} elsif(/^([\d.,-]+) ([\d.,-]+) "([^"]+)"(.*)/) { # xplanet marker file format
 		my ($lat, $lon, $marker, $opt) = ($1, $2, $3, $4);
 		$lat =~ s/,/./;
 		$lon =~ s/,/./;
@@ -179,9 +190,9 @@ sub parse {
 		my ($marker, $opt) = ($1, $2);
 		$config->{markers}->{$marker} ||= {};
 		$config->parse_options($config->{markers}->{$marker}, $marker, $opt);
-	} elsif(/"([^"]*)" -> "([^"]+)"/) {
+	} elsif(/"([^"]*)"\s+->\s+"([^"]+)"/) {
 		$config->{links}->{$1}->{$2} = 1;
-	} elsif(/^label (\d+) (\d+) "([^"]+)"(.*)/) {
+	} elsif(/^label ([+-]?\d+) ([+-]?\d+) "([^"]+)"(.*)/) {
 		$config->{yxlabels}->[$labelnr] = { y => $1, x => $2, text => $3 };
 		my $opt = $4;
 		$config->default_options($config->{yxlabels}->[$labelnr]);
@@ -196,6 +207,7 @@ sub parse {
 sub read {
 	my $config = shift;
 	my $file = shift || die "read: no filename";
+	$file =~ s!^~/!$ENV{HOME}/!;
 	$config->{file} = $file;
 
 	my $fh = IO::File->new($file) or die "$file: $!";

@@ -60,7 +60,7 @@ GetOptions(
 	'x=s' => \$x,
 	'y=s' => \$y,
 	'q' => \$config->{quiet},
-	'o=s' => sub { shift; $config->parse(shift); },
+	'o=s' => sub { $config->parse($_[1]); },
 	help => sub { HELP_MESSAGE(); },
 	version => sub { VERSION_MESSAGE(); exit(0); },
 ) or HELP_MESSAGE();
@@ -138,25 +138,6 @@ config file.
 
 =over
 
-=item -q
-
-Be quiet. Per default, IrcMarkers prints which labels and links are placed on
-the map.
-
-=item -o I<command>
-
-Evaluate a configuration command. It will be executed before any commands in
-the config file (i.e. it will not override commands there).
-
-=item -y I<south/north>
-
-=item -x I<west/east>
-
-Declare input map dimensions. The map is assumed to be in mercator projection
-per default. -y specifies the lower/upper latitude coordinates, -x the
-left/right edge longitude. Per default, the map is assumed to be a world map
-(-y -90/90 -x -180/180).
-
 =item F<config>
 
 Config file to read markers and options from. This parameter is mandatory.
@@ -171,6 +152,25 @@ Read input map from F<inputmap>. Supported formats are .gif, .jpg/jpeg, .png,
 Write output map to F<outputmap>. Supported formats are .gif, .jpg/jpeg, .png,
 .gd/gd1, .gd2, and .wbmp.
 
+=item -q
+
+Be quiet. Per default, IrcMarkers prints which labels and links are placed on
+the map.
+
+=item -y I<south/north>
+
+=item -x I<west/east>
+
+Declare input map dimensions. Unless specified otherwise in the config file,
+the map is assumed to be in mercator projection. -y specifies the lower/upper
+latitude coordinates, -x the left/right edge longitude. Per default, the map is
+assumed to be a world map (-y -90/90 -x -180/180).
+
+=item -o I<command>
+
+Evaluate a configuration command. It will be executed before any commands in
+the config file (i.e. it will not override commands there).
+
 =back
 
 =head1 CONFIG FILE SYNTAX
@@ -181,13 +181,13 @@ The following directives can be used in the config file:
 
 =over
 
-=item I<lat> I<lon> "I<label>"
+=item I<lat> I<lon> "I<marker>"
 
-=item I<lat> I<lon> "I<label>" I<options>
+=item I<lat> I<lon> "I<marker>" I<options>
 
-=item "I<label>" I<options>
+=item "I<marker>" I<options>
 
-Place marker with label on map at given (decimal) coordinates.
+Place marker with label I<marker> on map at given (decimal) coordinates.
 Use negative values for south/east, positive for north/west.
 This format is compatible with the xplanet syntax.
 The following is a marker for Myon in Germany:
@@ -198,11 +198,13 @@ B<49.2532 7.0425 "Myon">
 
 Draw a link between I<marker1> and I<marker2>.
 
-=item label I<y> I<x>
+=item label I<y> I<x> "I<text>"
 
-=item label I<y> I<x> I<options>
+=item label I<y> I<x> "I<text>" I<options>
 
 Place a label at position I<y>/I<x> (in pixels). Useful for headlines etc.
+Using negative values will count from the bottom/right border in X11's
+-geometry style.
 
 =back
 
@@ -224,21 +226,6 @@ B<"Myon" gpg B46B923B6D8ABE71 gpg C5AF774A58510B5A>
 B<Note:> This is the long, 16 character keyid. To retrieve it, use C<gpg
 --list-key --with-colon>.
 
-=item dot_color I<R G B>
-
-=item dot_border I<R G B>
-
-Color of the dots placed on the map. Default is dot_color 255 255 255,
-dot_border 0 0 0.
-
-=item dot_size I<size>
-
-Size of the dots. Default is 2.
-
-=item dot_shape dot|circle
-
-Dots are filled (dot) or hollow (circle). Default is dot.
-
 =item label_color I<R G B>
 
 =item label_border I<R G B>|none
@@ -255,6 +242,21 @@ font F</usr/share/ircmarkers/fixed_01.ttf>.
 
 Size in points of the labels. Default is ptsize 6.
 
+=item dot_color I<R G B>
+
+=item dot_border I<R G B>|none
+
+Color of the dots placed on the map. Default is dot_color 255 255 255,
+dot_border 0 0 0.
+
+=item dot_size I<size>
+
+Size of the dots. Default is 2.
+
+=item dot_shape dot|circle
+
+Dots are filled (dot) or hollow (circle). Default is dot.
+
 =back
 
 =head2 Global Options
@@ -270,26 +272,18 @@ Read input map from F<inputmap>. Supported formats are .jpg and .png.
 Write output map to F<outputmap>. Supported formats are .jpg, .png, .gd1, .gd2,
 and .wbmp.
 
-=item lat I<south/north>
+=item lat|south_north I<south/north>
 
-=item south_north I<south/north>
-
-=item lon I<west/east>
-
-=item west_east I<west/east>
+=item lon|west_east I<west/east>
 
 Declare input map dimensions. Default is lat -90/90, lon -180/180.
 
 B<Note:> It is possible to use "unusual" values like lon 0/360 if you adjust
 the coordinates as well. (-20 becomes 340 etc.)
 
-=item view_lat I<south/north>
+=item view_lat|view_south_north I<south/north>
 
-=item view_south_north I<south/north>
-
-=item view_lon I<west/east>
-
-=item view_west_east I<west/east>
+=item view_lon|view_west_east I<west/east>
 
 Only show part of the map in the output. Default is to show the whole map.
 
@@ -305,15 +299,14 @@ Size of output map. Default is input map, or size of part selected.
 
 Map projection. Default is mercator.
 center_lon is only used for sinusoidal projection.
+There is no default for center_lon.
 
 =item link_outside on|off
 
 Whether to draw lines to markers that are not visible on the map. Default is
 link_outside off.
 
-=item link_color I<R G B>
-
-=item sign2_color I<R G B>
+=item link_color|sign2_color I<R G B>
 
 Color of the lines drawn between the markers. Default is link_color 255 255 0.
 
@@ -326,6 +319,8 @@ link_color none.
 
 Full pathname to the binary that moves the labels around to reduce overlap.
 Default is overlapcorrector F</usr/lib/ircmarkers/overlap>.
+Chances are that you only need to change that parameter if you are debugging
+the overlap corrector.
 
 =item overlap_correction on|off
 
@@ -363,7 +358,8 @@ B<ircmarkers -x -10.4/29.4 -y 32/72 coordinates.txt europe.jpg mutt-eu.jpg>
 =head1 BUGS
 
 The GD library keeps a raw bitmap of the map in memory. Big maps will use lots
-of memory.
+of memory. Precompute the map you are going to use, i.e. downsample it to the
+target size using Imagemagick's I<convert> or IrcMarkers view_* functions.
 
 Please report bugs in IrcMarkers using the Debian bug tracking system. The
 IrcMarkers bug page is at http://bugs.debian.org/ircmarkers.
@@ -437,6 +433,7 @@ http://www.elho.net/misc/xplanet/ - compilation of suitable maps from NASA
 =head1 AUTHOR
 
 IrcMarkers was written by Christoph Berg <cb@df7cb.de>.
+You can find me (Myon) on ircnet/freenode/oftc.
 
 Thanks go to Uli Martens for the "map of trust" idea.
 
