@@ -6,8 +6,8 @@
 
 # some PGP keys; uncomment the following lines to put a link on the map.
 # use "gpg --recv <keyid>" to fetch the keys from a keyserver
-#"Myon" gpg:B46B923B6D8ABE71
-#"formorer" gpg:D35BBC99BC7D020A
+#"Myon" gpg B46B923B6D8ABE71
+#"formorer" gpg D35BBC99BC7D020A
 
 # input/output filename
 read world.jpg

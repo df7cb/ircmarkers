@@ -6,8 +6,11 @@ ircmarkers (0.3) unstable; urgency=low
   * Provide pointer to freely available maps.
   * Removed unused dependency on libttf2.
   * Colors configurable per marker.
+  * Support all GD file formats.
+  * Complain about some unreasonable map defintions (thanks to Elmar Hoffmann
+    for these suggestions).
 
- -- Christoph Berg <cb@df7cb.de>  Mon, 23 Aug 2004 21:19:12 +0200
+ -- Christoph Berg <cb@df7cb.de>  Thu, 26 Aug 2004 14:29:15 +0200
 
 ircmarkers (0.2) unstable; urgency=low
 

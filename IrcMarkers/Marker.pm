@@ -77,7 +77,7 @@ sub draw_label {
 	my $font = $text->{fontpath};
 	my $fontsize = $text->{fontsize};
 
-	if ($text->{border}) {
+	if (ref $text->{border}) {
 		my $bordercolor = $image->colorResolve(@{$text->{border}});
 		$image->stringFT($bordercolor, $font, $fontsize, 0, $labelx+1, $labely+1, $text->{text});
 		$image->stringFT($bordercolor, $font, $fontsize, 0, $labelx-1, $labely-1, $text->{text});

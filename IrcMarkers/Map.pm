@@ -34,7 +34,6 @@ use IrcMarkers::Marker;
 my $pi = 3.1415926535898;
 my $degtorad = 0.017453292519943;
 my $radtodeg = 57.295779513082;
-my $rearth = 6371030; # mean Earth radius
 
 # create 24bit images
 GD::Image->trueColor(1);
@@ -43,17 +42,26 @@ GD::Image->trueColor(1);
 sub new {
 	my($class, $config) = @_;
 
+	# open input map
 	my $file = $config->{read} || die "no file to read from";
 	$file =~ /\.([^.]+)$/;
 	my $type = lc $1;
 
 	die "File not found: $file" unless -f $file;
-	if ($type eq "gd2") {
+	if ($type eq "gd" or $type eq "gd1") {
+		$config->{IMAGE} = GD::Image->newFromGd($file);
+	} elsif ($type eq "gd2") {
 		$config->{IMAGE} = GD::Image->newFromGd2($file);
-	} elsif ($type eq "png") {
-		$config->{IMAGE} = GD::Image->newFromPng($file);
+	} elsif ($type eq "gif") {
+		$config->{IMAGE} = GD::Image->newFromGif($file);
 	} elsif ($type eq "jpg" or $type eq "jpeg") {
 		$config->{IMAGE} = GD::Image->newFromJpeg($file);
+	} elsif ($type eq "png") {
+		$config->{IMAGE} = GD::Image->newFromPng($file);
+	} elsif ($type eq "xbm") {
+		$config->{IMAGE} = GD::Image->newFromXbm($file);
+	} elsif ($type eq "xpm") {
+		$config->{IMAGE} = GD::Image->newFromXpm($file);
 	} else {
 		die "Unsupported input image format $type";
 	}
@@ -62,16 +70,28 @@ sub new {
 	# Let's get pixel width and height of the map
 	($config->{w}, $config->{h}) = $config->{IMAGE}->getBounds();
 
+	# check coordinates
+	die "western latitude greater than eastern" if $config->{west} >= $config->{east};
+	die "latitude range greater than 360 degrees" if $config->{east} - $config->{west} > 360;
+	die "southern longitude greater than northern" if $config->{south} >= $config->{north};
+	die "longitude range greater than 180 degrees" if $config->{north} - $config->{south} > 180;
+
+	# handle view_*
 	if ($config->{view_west} or $config->{view_south} or $config->{view_width} or $config->{view_height}) {
-		$config->{view_west} ||= $config->{west};
-		$config->{view_east} ||= $config->{east};
-		$config->{view_north} ||= $config->{north};
-		$config->{view_south} ||= $config->{south};
+		$config->{view_west} = $config->{west} unless defined $config->{view_west};
+		$config->{view_east} = $config->{east} unless defined $config->{view_east};
+		$config->{view_north} = $config->{north} unless defined $config->{view_north};
+		$config->{view_south} = $config->{south} unless defined $config->{view_south};
+
+		die "view_west is outside of map" if $config->{view_west} < $config->{west};
+		die "view_east is outside of map" if $config->{view_east} > $config->{east};
+		die "view_south is outside of map" if $config->{view_south} < $config->{south};
+		die "view_north is outside of map" if $config->{view_north} > $config->{north};
 
 		my $w = $config->{w} * ($config->{view_east} - $config->{view_west}) / ($config->{east} - $config->{west});
 		my $h = $config->{h} * ($config->{view_north} - $config->{view_south}) / ($config->{north} - $config->{south});
 		if($config->{view_width}) { # scale image
-			if($config->{view_height}) { # don't keep aspect ratio if user request otherwise
+			if($config->{view_height}) { # don't keep aspect ratio if user requests otherwise
 				($w, $h) = ($config->{view_width}, $config->{view_height});
 			} else {
 				($w, $h) = ($config->{view_width}, $h * ($config->{view_width} / $w));
@@ -98,6 +118,7 @@ sub new {
 		($config->{w}, $config->{h}) = $config->{IMAGE}->getBounds();
 	}
 
+	# handle projection system
 	if ($config->{projection} eq 'mercator') {
 		# degree per pixel RESolution
 		$config->{xres} = ($config->{east} - $config->{west}) / $config->{w};
@@ -238,18 +259,19 @@ sub draw {
 }
 
 sub draw_label_new {
-	my ($config, $nr) = @_;
+	my ($config, $item) = @_;
 	my ($labelx, $labely, $text) = (
-		$config->{yxlabels}->[$nr]->{x},        # label upper left abscissa
-		$config->{yxlabels}->[$nr]->{y},        # label upper ordinate
-		$config->{yxlabels}->[$nr]->{text}      # label hash ref containing "text" "border" "colour" "fontpath" "fontsize"
+		$item->{x},        # label upper left abscissa
+		$item->{y},        # label upper ordinate
+		$item->{text}
 	);
 	my $image = $config->{IMAGE};
-	my $font = $config->{fontpath};
-	my $fontsize = $config->{fontsize};
+	my $font = $item->{font} || $config->{font};
+	my $fontsize = $item->{ptsize} || $config->{ptsize};
 
-	if ($config->{border}) {
-		my $bordercolor = $image->colorResolve(@{$config->{border}});
+	my $b = $item->{label_border} ? $item->{label_border} : $config->{label_border};
+	if (ref $b) { # might be -1
+		my $bordercolor = $image->colorResolve(@$b);
 		$image->stringFT($bordercolor, $font, $fontsize, 0, $labelx+1, $labely+1, $text);
 		$image->stringFT($bordercolor, $font, $fontsize, 0, $labelx-1, $labely-1, $text);
 		$image->stringFT($bordercolor, $font, $fontsize, 0, $labelx+1, $labely-1, $text);
@@ -261,7 +283,7 @@ sub draw_label_new {
 	}
 
 	# And finally draw the black text in the middle
-	my $fontcolor = $image->colorResolve(@{$config->{label_color}});
+	my $fontcolor = $image->colorResolve(@{$item->{label_color} || $config->{label_color}});
 	$image->stringFT($fontcolor, $font, $fontsize, 0, $labelx, $labely, $text);
 }
 
@@ -272,14 +294,16 @@ sub write {
 	$file =~ /\.([^.]+)$/;
 	my $format = lc $1;
 	my $data;
-	if ($format eq "png") {
-		$data = $image->png;
-	} elsif ($format eq "jpg" or $format eq "jpeg") {
-		$data = $image->jpeg;
-	} elsif ($format eq "gd" or $format eq "gd1") {
+	if ($format eq "gd" or $format eq "gd1") {
 		$data = $image->gd;
 	} elsif ($format eq "gd2") {
 		$data = $image->gd2;
+	} elsif ($format eq "gif") {
+		$data = $image->gif;
+	} elsif ($format eq "jpg" or $format eq "jpeg") {
+		$data = $image->jpeg;
+	} elsif ($format eq "png") {
+		$data = $image->png;
 	} elsif ($format eq "wbmp") {
 		$data = $image->wbmp;
 	} else {
@@ -290,6 +314,11 @@ sub write {
 	binmode SVG;
 	print SVG $data;
 	close SVG;
+}
+
+# transitional stub
+sub get_gpg_links {
+	IrcMarkers::File::get_gpg_links(@_);
 }
 
 1;

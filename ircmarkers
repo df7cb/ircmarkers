@@ -32,6 +32,9 @@ use Getopt::Long;
 use IrcMarkers::File;
 use IrcMarkers::Map;
 
+# Debug
+#use Data::Dumper;
+
 my $VERSION = "v0.2";
 
 sub VERSION_MESSAGE {
@@ -76,61 +79,11 @@ die "no output map" unless $config->{write};
 my $map = IrcMarkers::Map->new($config);
 
 foreach my $marker (keys %{$config->{markers}}) {
-	$map->add($marker);
+	$map->add($marker) if $config->{markers}->{$marker}->{lat};
 }
 
-#foreach my $yxlabelnr (0 .. @{$config->{yxlabels}}) {
-#	$map->add_yxlabel($yxlabelnr);
-#}
-
-if($config->{gpg}) { # there are gpg keys
-	my $keys = join ' ', keys %{$config->{gpg}};
-	#print "gpg --list-sigs --with-colon --fixed-list-mode --fast-list-mode $keys\n";
-	open GPG, "gpg --list-sigs --with-colon --fixed-list-mode --fast-list-mode $keys |" or die "gpg: $!";
-	my $key;
-	while(<GPG>) {
-		chomp;
-		next if /^(rev|sub|tru|uat):/;
-		#print "$_\n";
-		if(/^pub::\d+:\d+:([0-9A-F]+):/) {
-			$key = $1;
-			warn "$key not related to any marker - did you use the long (16 char) keyid?\n" unless $config->{gpg}->{$key};
-			delete $config->{gpg_not_found}->{$key};
-		} elsif(/^sig:::\d+:([0-9A-F]+):/) {
-			next unless $config->{gpg}->{$1}; # target not on map
-			next if $key eq $1; # self-sig
-			$config->{gpg_links}->{$1}->{$key} = 1;
-		} else {
-			warn "unknown gpg output: $_";
-		}
-	}
-
-	foreach my $key (keys %{$config->{gpg_not_found}}) {
-		warn "$config->{gpg_not_found}->{$key}: key $key was not found in gpg's keyring\n";
-	}
-
-	foreach my $key (keys %{$config->{gpg_links}}) {
-		my $source = $config->{gpg}->{$key};
-		next unless $config->{link_outside} or $config->{markers}->{$source}->{visible};
-		foreach my $targetkey (keys %{$config->{gpg_links}->{$key}}) {
-			my $target = $config->{gpg}->{$targetkey};
-			next unless $config->{link_outside} or $config->{markers}->{$target}->{visible};
-			my ($arrow, $color);
-			# TODO: compute uni/bidi for markers instead of keys (for people with more than one key)
-			if($config->{gpg_links}->{$targetkey}->{$key}) { # bidirectional link
-				next if $targetkey gt $key; # process only once
-				$color = $config->{link_color};
-				$arrow = "<->";
-			} else {
-				$color = $config->{sign1_color} or next; # don't draw unidirectional links
-				$arrow = "-->";
-			}
-			next unless $config->{markers}->{$source}->{lat};
-			next unless $config->{markers}->{$target}->{lat};
-			$map->link($source, $target, $color);
-			print "$source $arrow $target\n" unless $config->{quiet};
-		}
-	}
+if($config->{gpg}) {
+	$config->get_gpg_links();
 }
 
 foreach my $link (keys %{$config->{links}}) {
@@ -144,9 +97,9 @@ foreach my $link (keys %{$config->{links}}) {
 
 $map->compute_overlap() if($config->{overlap_correction});
 $map->draw();
-#foreach my $yxlabelnr (0 .. @{$config->{yxlabels}}) {
-#	$map->draw_label_new($yxlabelnr);
-#}
+foreach my $nr (0 .. @{$config->{yxlabels}} - 1) {
+	$map->draw_label_new($config->{yxlabels}->[$nr]);
+}
 $map->write($config->{write});
 
 __END__
@@ -181,15 +134,6 @@ config file.
 Be quiet. Per default, IrcMarkers prints which labels and links are placed on
 the map.
 
-=item F<inputmap>
-
-Read input map from F<inputmap>. Supported formats are .jpg and .png.
-
-=item F<outputmap>
-
-Write output map to F<outputmap>. Supported formats are .jpg, .png, .gd(1),
-.gd2, and .wbmp.
-
 =item -y I<south/north>
 
 =item -x I<west/east>
@@ -198,6 +142,20 @@ Declare input map dimensions. The map is assumed to be in mercator projection
 per default. -y specifies the lower/upper latitude coordinates, -x the
 left/right edge longitude. Per default, the map is assumed to be a world map
 (-y -90/90 -x -180/180).
+
+=item F<config>
+
+Config file to read markers and options from.
+
+=item F<inputmap>
+
+Read input map from F<inputmap>. Supported formats are .gif, .jpg/jpeg, .png,
+.xbm, .xpm, and the libgd-Formats .gd/gd1 and .gd2.
+
+=item F<outputmap>
+
+Write output map to F<outputmap>. Supported formats are .gif, .jpg/jpeg, .png,
+.gd/gd1, .gd2, and .wbmp.
 
 =back
 
@@ -224,13 +182,13 @@ The following options are available:
 
 =over
 
-=item gpg:I<keyid>
+=item gpg I<keyid>
 
 Associate GnuPG/PGP I<keyid> with the marker. If two keys have signed each
 other, and both markers are visible on the map, a link will be drawn between
 the markers. Multiple keyids can be given. Example:
 
-B<"Myon" gpg:B46B923B6D8ABE71 gpg:C5AF774A58510B5A>
+B<"Myon" gpg B46B923B6D8ABE71 gpg C5AF774A58510B5A>
 
 B<Note:> This is the long, 16 character keyid. To retrieve it, use C<gpg
 --list-key --with-colon>.
@@ -340,6 +298,10 @@ Be quiet. Default is quiet off.
 
 Read auxillary config file.
 
+=item # comment
+
+Anything else starting with a # character is a comment.
+
 =back
 
 =head1 EXAMPLES
@@ -358,7 +320,11 @@ B<ircmarkers -x -10.4/29.4 -y 32/72 coordinates.txt europe.jpg mutt-eu.jpg>
 
 =head1 BUGS
 
-The GD library keeps a raw bitmap of the map in memory. Big maps will use lots of memory.
+The GD library keeps a raw bitmap of the map in memory. Big maps will use lots
+of memory.
+
+Please report bugs in IrcMarkers using the Debian bug tracking system. The
+IrcMarkers bug page is at http://bugs.debian.org/ircmarkers.
 
 =head1 SEE ALSO
 
@@ -419,6 +385,10 @@ http://www.ckdhr.com/dns-loc/finding.html - more pointers
 =item *
 
 http://visibleearth.nasa.gov/cgi-bin/viewrecord?11656 - nice copyright-free world map
+
+=item *
+
+http://www.elho.net/misc/xplanet/ - compilation of suitable maps from NASA
 
 =back
 
