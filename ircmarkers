@@ -86,8 +86,9 @@ die "no output map" unless $config->{write};
 my $map = IrcMarkers::Map->new($config);
 
 foreach my $marker (keys %{$config->{markers}}) {
-	$map->add($marker) if $config->{markers}->{$marker}->{lat};
-	$config->compute_boundingbox($config->{markers}->{$marker});
+	my $item = $config->{markers}->{$marker};
+	$map->add($marker) if $item->{lat};
+	$config->compute_boundingbox($item) if $item->{visible};
 }
 
 if($config->{link_color} and $config->{gpg}) {
@@ -120,8 +121,10 @@ $map->compute_overlap() if($config->{overlap_correction});
 $map->draw();
 if($config->{yxlabels}) {
 	foreach my $nr (0 .. @{$config->{yxlabels}} - 1) {
-		$map->draw_label_new($config->{yxlabels}->[$nr]);
-		$config->compute_boundingbox($config->{yxlabels}->[$nr]);
+		my $label = $config->{yxlabels}->[$nr];
+		print "label \"$label->{text}\" at $label->{y}, $label->{x}\n";
+		$map->draw_label_new($label);
+		$config->compute_boundingbox($label);
 	}
 }
 $map->write($config->{write});

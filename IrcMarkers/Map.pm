@@ -152,15 +152,15 @@ sub coord2pixel {
 
 	if ($config->{projection} eq 'mercator') {
 		# pixel values, sprintf rounds to nearest
-		$x = sprintf("%u", ($lon - $config->{west}) / $config->{xres});
-		$y = sprintf("%u", ($config->{north} - $lat) / $config->{yres});
+		$x = sprintf("%d", ($lon - $config->{west}) / $config->{xres});
+		$y = sprintf("%d", ($config->{north} - $lat) / $config->{yres});
 		$vis = 0 if ($lon > $config->{east} or $lon < $config->{west} or $lat > $config->{north} or $lat < $config->{south});
 	} elsif ($config->{projection} eq 'sinusoidal') {
 		# absolute X
 		$X0 = ($lon - $config->{center_lon}) * cos($lat * $degtorad);
 		# pixel values
-		$x = sprintf("%u", ($X0 - $config->{Xleft}) / $config->{xres});
-		$y = sprintf("%u", ($config->{north} - $lat) / $config->{yres});
+		$x = sprintf("%d", ($X0 - $config->{Xleft}) / $config->{xres});
+		$y = sprintf("%d", ($config->{north} - $lat) / $config->{yres});
 		$vis = 0 if ($X0 < $config->{Xleft} or $X0 > $config->{Xright} or $lat > $config->{north} or $lat < $config->{south});
 	}
 
@@ -190,7 +190,7 @@ sub add {
 	return unless $vis;
 	$config->{markers}->{$marker}->{visible} = 1;
 
-	print "$label->{text} at $config->{markers}->{$marker}->{lon}, $config->{markers}->{$marker}->{lat} ($x, $y)\n" unless $config->{quiet};
+	print "$label->{text} at $config->{markers}->{$marker}->{lat}, $config->{markers}->{$marker}->{lon} ($y, $x)\n" unless $config->{quiet};
 
 	my $newlabel = new IrcMarkers::Marker ($x, $y, $dot, $label, $config->{IMAGE});
 	push @{$config->{LABELS}}, $newlabel;
@@ -345,10 +345,14 @@ sub write {
 sub compute_boundingbox { # compute bounding box
 	my $config = shift;
 	my $item = shift;
-	$config->{min_x} = $item->{x} if not defined $config->{min_x} or $item->{x} < $config->{min_x};
-	$config->{max_x} = $item->{x} if not defined $config->{max_x} or $item->{x} > $config->{max_x};
-	$config->{min_y} = $item->{y} if not defined $config->{min_y} or $item->{y} < $config->{min_y};
-	$config->{max_y} = $item->{y} if not defined $config->{max_y} or $item->{y} > $config->{max_y};
+	warn "$item->{y}, $item->{x}" unless defined $item->{y} and defined $item->{x};
+	my ($y, $x) = ($item->{y}, $item->{x});
+	$y = $config->{h} + $y if $y < 0;
+	$x = $config->{w} + $x if $x < 0;
+	$config->{min_x} = $x if not defined $config->{min_x} or $x < $config->{min_x};
+	$config->{max_x} = $x if not defined $config->{max_x} or $x > $config->{max_x};
+	$config->{min_y} = $y if not defined $config->{min_y} or $y < $config->{min_y};
+	$config->{max_y} = $y if not defined $config->{max_y} or $y > $config->{max_y};
 }
 
 # transitional stub
