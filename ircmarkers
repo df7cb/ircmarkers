@@ -31,8 +31,10 @@ use Getopt::Long;
 use IrcMarkers::File;
 use IrcMarkers::Map;
 
+my $VERSION = "v0.2";
+
 sub VERSION_MESSAGE {
-	print "IrcMarkers v0.1 (C) 2004 Christoph Berg <cb\@df7cb.de>, GNU GPL.\n";
+	print "IrcMarkers $VERSION (C) 2004 Christoph Berg <cb\@df7cb.de>, GNU GPL.\n";
 	exit 0;
 }
 
@@ -377,6 +379,8 @@ Image::WorldMap: http://www.astray.com/WorldMap/
 IrcMarkers was written by Christoph Berg <cb@df7cb.de>.
 
 Thanks go to Uli Martens for the "map of trust" idea.
+
+Alexander Wirt suggested the capability to draw selected parts of the map.
 
 The IrcMarkers homepage is at B<http://www.df7cb.de/projects/ircmarkers/>.
 

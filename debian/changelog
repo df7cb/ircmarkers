@@ -1,6 +1,12 @@
-ircmarkers (0.1-1) unstable; urgency=low
+ircmarkers (0.2) unstable; urgency=low
+
+  * Added view_lat/view_lon (thanks to Alexander Wirt for suggesting this).
+
+ -- Christoph Berg <cb@df7cb.de>  Thu, 29 Jul 2004 21:09:52 +0200
+
+ircmarkers (0.1) unstable; urgency=low
 
   * Initial Release.
 
- -- Christoph Berg <cb@df7cb.de>  Sat, 10 Jul 2004 18:56:37 +0200
+ -- Christoph Berg <cb@df7cb.de>  Thu, 29 Jul 2004 20:40:40 +0200
 

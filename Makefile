@@ -19,4 +19,4 @@ install: overlap ircmarkers.1
 	$(INSTALL_PROGRAMM) -D -m 664 ircmarkers.1 $(DESTDIR)/usr/share/man/man1/ircmarkers.1
 
 clean:
-	rm -f overlap ircmarkers.1 examples/dl_out.jpg
+	rm -f overlap ircmarkers.1 tags

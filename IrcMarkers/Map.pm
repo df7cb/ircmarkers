@@ -29,8 +29,6 @@ use warnings;
 use GD;
 use IPC::Open2;
 use IrcMarkers::Marker;
-use vars qw($VERSION);
-$VERSION = '2.0b1';
 
 # Some file-global vars
 my $pi = 3.1415926535898;
