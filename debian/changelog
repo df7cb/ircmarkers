@@ -6,8 +6,9 @@ ircmarkers (0.6) unstable; urgency=low
   * Compute better bounding box.
   * Compute links per marker instead per key.
   * Code cleanup.
+  * Add debian/watch.
 
- -- Christoph Berg <cb@df7cb.de>  Mon,  1 Nov 2004 15:02:40 +0100
+ -- Christoph Berg <cb@df7cb.de>  Sun, 14 Nov 2004 01:51:42 +0100
 
 ircmarkers (0.5) unstable; urgency=low
 
