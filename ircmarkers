@@ -1,0 +1,74 @@
+#!/usr/bin/perl -w
+#
+# (c) 2004 Christoph Berg <cb@df7cb.de>
+#
+# This file was copied from example.pl from the MapMarker distribution:
+#   Author  :  Guillaume Leclanche (Mo-Ize) <mo-ize@nul-en.info>
+#   Version :  2.0 beta 1
+#   Date    :  08 Feb 2003
+# It is licensed under the GNU GPL.
+
+# 2003-12-01 cb: uses @ARGV
+# 2004-07-04 cb: cleaned up code, introduced config file
+
+use strict;
+use warnings;
+use lib '/home/cb/public_html/irc/src';
+use lib '.';
+use Getopt::Std;
+
+use IrcMarkers::File;
+use IrcMarkers::Map;
+
+my %opt;
+getopts('x:y:', \%opt);
+
+my $config = IrcMarkers::File->new;;
+
+sub usage {
+	print "usage: $0 cities.txt map.jpg output.jpg\n";
+	exit 0;
+}
+
+if($ARGV[0]) {
+	$config->read($ARGV[0]);
+} else {
+	die "usage: $0 [-x west/east] [-y south/north] config [inputmap outputmap]\n";
+}
+
+if($opt{x}) {
+	$opt{x} =~ /(.*)\/(.*)/ or die "invalid -x format";
+	($config->{west}, $config->{east}) = ($1, $2);
+}
+if($opt{y}) {
+	$opt{y} =~ /(.*)\/(.*)/ or die "invalid -y format";
+	($config->{south}, $config->{north}) = ($1, $2);
+}
+
+if($ARGV[1]) {
+	$config->{read} = $ARGV[1];
+}
+if($ARGV[2]) {
+	$config->{write} = $ARGV[2];
+}
+
+die "no input map" unless $config->{read};
+die "no output map" unless $config->{write};
+
+my $map = IrcMarkers::Map->new($config);
+
+foreach my $marker (keys %{$config->{markers}}) {
+	#print "$marker at $config->{markers}->{$marker}->{lon}/$config->{markers}->{$marker}->{lat}\n";
+	$map->add($config->{markers}->{$marker}->{lon},
+		$config->{markers}->{$marker}->{lat},
+		$marker);
+}
+
+foreach my $link (keys %{$config->{links}}) {
+	#print "$marker at $config->{markers}->{$marker}->{lon}/$config->{markers}->{$marker}->{lat}\n";
+	foreach my $target (keys %{$config->{links}->{$link}}) {
+		$map->link($link, $target);
+	}
+}
+
+$map->draw($config->{write});

@@ -1,0 +1,13 @@
+read examples/dl_half.jpg
+write examples/dl_out.jpg
+lat 44/56
+lon 4/20
+overlap_correction 1
+#ptsize 12
+
+#include "examples/debian.de"
+
+"Myon" -> "youam"
+"Myon" -> "weasel"
+"Myon" -> "codebreaker"
+"weasel" -> "youam"
