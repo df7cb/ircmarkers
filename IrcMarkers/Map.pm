@@ -136,13 +136,13 @@ sub add {
 }
 
 sub link {
-	my ($config, $link, $target) = @_;
+	my ($config, $link, $target, $link_color) = @_;
 
 	# Pixels are supposed to be unsigned integers, sprintf rounds to nearest.
 	my $newlink = IrcMarkers::Marker->new_line($config->{markers}->{$link}->{x},
 		$config->{markers}->{$link}->{y},
 		$config->{markers}->{$target}->{x},
-		$config->{markers}->{$target}->{y}, $config->{link_color});
+		$config->{markers}->{$target}->{y}, $link_color);
 	push @{$config->{LINKS}}, $newlink;
 }
 

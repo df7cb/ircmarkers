@@ -24,7 +24,7 @@ Copyright (C) 2004 Christoph Berg <cb@df7cb.de>
 IrcMarkers is an improved version of MapMarkers.
 Copyright (C) 2003 Guillaume Leclanche (Mo-Ize) <mo-ize@nul-en.info>
 
-  This programm has been really inspired by two programs:
+  This program has been really inspired by two programs:
 
   * xplanet (http://xplanet.sourceforge.net).
   I have reused xplanet's overlap correction algorithm, and have ported it to

@@ -19,6 +19,7 @@ sub new {
 		label_color => [255, 255, 0],
 		label_border => [0, 0, 0],
 		link_color => [255, 128, 0],
+		#sign1_color => [100, 100, 100],
 		font => '/usr/share/ircmarkers/fixed_01.ttf',
 		ptsize => 6,
 		quiet => 0,
@@ -32,16 +33,15 @@ sub parse_options {
 	my $config = shift;
 	my $marker = shift;
 	my $opt = shift;
-	while($opt) {
-		$opt =~ s/^ +|#.*//;
+	while($opt) { # loop over options
+		$opt =~ s/^\s+|#.*//g;
 		last unless $opt;
 		if($opt =~ s/gpg:([0-9a-fx]+)//gi) {
-			#push @{$config->{markers}->{$marker}->{gpg}}, $1;
 			$config->{gpg}->{uc $1} = $marker;
 			$config->{gpg_not_found}->{uc $1} = $marker;
 		} else {
 			warn "$config->{file}.$.: unknown option: $opt\n";
-			next;
+			last;
 		}
 	}
 }
@@ -86,27 +86,37 @@ sub read {
 			delete $config->{label_border};
 		} elsif(/^label_border (\d+) (\d+) (\d+)$/) {
 			$config->{label_border} = [$1, $2, $3];
-		} elsif(/^link_colou?r (\d+) (\d+) (\d+)$/) {
+		} elsif(/^(?:link|sign2)_colou?r (\d+) (\d+) (\d+)$/) {
 			$config->{link_color} = [$1, $2, $3];
+		} elsif(/^sign1_colou?r (no|off|none)$/) {
+			delete $config->{sign1_color};
+		} elsif(/^sign1_colou?r (\d+) (\d+) (\d+)$/) {
+			$config->{sign1_color} = [$1, $2, $3];
 		} elsif(/^font (.+)/) {
 			$config->{font} = $1;
 		} elsif(/^ptsize (.+)/) {
 			$config->{ptsize} = $1;
 		} elsif(/^overlap (.+)/) {
 			$config->{overlap} = $1;
-		} elsif(/^overlap_correction (.+)/) {
-			$config->{overlap_correction} = $1;
-		} elsif(/^([\d.,-]+)\s+([\d.,-]+)\s+"([^"]*)"(.*)/) { # xplanet marker file format
+		} elsif(/^overlap_correction (on|yes)/) {
+			$config->{overlap_correction} = 1;
+		} elsif(/^overlap_correction (off|no)/) {
+			$config->{overlap_correction} = 0;
+		} elsif(/^quiet (on|yes)/) {
+			$config->{quiet} = 1;
+		} elsif(/^quiet (off|no)/) {
+			$config->{quiet} = 0;
+		} elsif(/^([\d.,-]+)\s+([\d.,-]+)\s+"([^"]+)"(.*)/) { # xplanet marker file format
 			my ($lat, $lon, $marker, $opt) = ($1, $2, $3, $4);
 			$lat =~ s/,/./;
 			$lon =~ s/,/./;
 			$config->{markers}->{$marker}->{lat} = $lat;
 			$config->{markers}->{$marker}->{lon} = $lon;
 			$config->parse_options($marker, $opt) if $opt;
-		} elsif(/^"([^"]*)"(.+)/) { # marker with options
+		} elsif(/^"([^"]*)"(.*)/) { # marker with options
 			my ($marker, $opt) = ($1, $2);
 			$config->parse_options($marker, $opt);
-		} elsif(/"([^"]*)" -> "([^"]*)"/) {
+		} elsif(/"([^"]*)" -> "([^"]+)"/) {
 			$config->{links}->{$1}->{$2} = 1;
 		} else {
 			warn "$file.$.: unknown format: $_\n";

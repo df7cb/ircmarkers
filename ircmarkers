@@ -94,26 +94,29 @@ if($config->{gpg}) { # there are gpg keys
 
 	foreach my $key (keys %{$config->{gpg_links}}) {
 		foreach my $target (keys %{$config->{gpg_links}->{$key}}) {
-			my $arrow = "-->";
-			if($config->{gpg_links}->{$target}->{$key}) {
+			my ($arrow, $color);
+			if($config->{gpg_links}->{$target}->{$key}) { # bidirectional link
 				next if $target gt $key; # process only once
+				$color = $config->{link_color};
 				$arrow = "<->";
+			} else {
+				$color = $config->{sign1_color} or next; # don't draw unidirectional links
+				$arrow = "-->";
 			}
 			next unless $config->{markers}->{$config->{gpg}->{$key}}->{lat};
 			next unless $config->{markers}->{$config->{gpg}->{$target}}->{lat};
-			#next unless $config->{gpg}->{$key} and $config->{gpg}->{$target};
-			$map->link($config->{gpg}->{$key}, $config->{gpg}->{$target});
+			$map->link($config->{gpg}->{$key}, $config->{gpg}->{$target}, $color);
 			print "$config->{gpg}->{$key} $arrow $config->{gpg}->{$target}\n" unless $config->{quiet};
 		}
 	}
 }
 
 foreach my $link (keys %{$config->{links}}) {
-	#print "$marker at $config->{markers}->{$marker}->{lon}/$config->{markers}->{$marker}->{lat}\n";
 	next unless $config->{markers}->{$link};
 	foreach my $target (keys %{$config->{links}->{$link}}) {
 		next unless $config->{markers}->{$target};
-		$map->link($link, $target);
+		print "$link <-> $target\n" unless $config->{quiet};
+		$map->link($link, $target, $config->{link_color});
 	}
 }
 
@@ -127,25 +130,186 @@ B<ircmarkers> - place markers on maps at given coordinates
 
 =head1 SYNOPSIS
 
-B<ircmarkers> [-x I<west/east> -y I<south/north>] F<config> [F<inputmap> F<outputmap>]
+B<ircmarkers> [-q] [-y I<south/north> -x I<west/east>] F<config> [F<inputmap> F<outputmap>]
 
 =head1 DESCRIPTION
 
 IrcMarkers takes a map in .png or .jpg format and a list of coordinates
-and labels in xplanet format and places the labels on the map.
+and labels in xplanet format and places markers on the map.
 It was written to generate user maps of IRC channels.
+
+GnuPG/PGP key ids can be associated with each marker, to create "maps of trust".
+
+IrcMarkers reads its configuration and the list of markers from a config file.
+The most important options (map to read/write, map dimensions) can be specified
+on the command line. Settings on the command line override settings in the
+config file.
 
 =head1 OPTIONS
 
-=head1 EXAMPLES
+=over
+
+=item -q
+
+Be quiet. Per default, IrcMarkers prints which labels and links are placed on
+the map.
+
+=item F<inputmap>
+
+Read input map from F<inputmap>. Supported formats are .jpg and .png.
+
+=item F<outputmap>
+
+Write output map to F<outputmap>. Supported formats are .jpg, .png, .gd(1),
+.gd2, and .wbmp.
+
+=item -y I<south/north>
+
+=item -x I<west/east>
+
+Declare input map dimensions. The map is assumed to be in mercator projection
+per default. -y specifies the lower/upper latitude coordinates, -x the
+left/right edge longitude. Per default, the map is assumed to be a world map
+(-y -90/90 -x -180/180).
+
+=back
 
 =head1 FILES
+
+The following directives can be used in the config file:
+
+=over
+
+=item I<lat> I<lon> "I<label>"
+
+=item I<lat> I<lon> "I<label>" I<options>
+
+=item "I<label>" I<options>
+
+Place marker with label on map at given (decimal) coordinates.
+The following is a marker for Myon in Germany:
+
+B<49.2532 7.0425 "Myon">
+
+This format is compatible with the xplanet syntax.
+
+The following options are available:
+
+=over
+
+=item gpg:I<keyid>
+
+Associate GnuPG/PGP I<keyid> with the marker. If two keys have signed each
+other, and both markers are visible on the map, a link will be drawn between
+the markers. Multiple keyids can be given. Example:
+
+B<"Myon" gpg:B46B923B6D8ABE71 gpg:C5AF774A58510B5A>
+
+B<Note:> This is the long, 16 character keyid. To retrieve it, use C<gpg
+--list-key --with-colon>.
+
+=back
+
+=item "I<marker1>" -> "I<marker2>"
+
+Draw a link between I<marker1> and I<marker2>.
+
+=item read F<inputmap>
+
+Read input map from F<inputmap>. Supported formats are .jpg and .png.
+
+=item write F<outputmap>
+
+Write output map to F<outputmap>. Supported formats are .jpg, .png, .gd1, .gd2,
+and .wbmp.
+
+=item lat I<south/north>
+
+=item south_north I<south/north>
+
+=item lon I<west/east>
+
+=item west_east I<west/east>
+
+Declare input map dimensions. Default is lat -90/90, lon -180/180.
+
+=item projection mercator|sinusoidal
+
+=item center_lon I<center>
+
+Map projection. Default is mercator.
+center_lon is only used for sinusoidal projection.
+
+=item dot_color I<R G B>
+
+=item dot_border I<R G B>
+
+Color of the dots placed on the map. Default is dot_color 255 255 255,
+dot_border 0 0 0.
+
+=item label_color I<R G B>
+
+=item label_border I<R G B>|none
+
+Color of the labels placed on the map. Default is label_color 255 255 0,
+label_border 0 0 0. The border can be removed by specifying the "none" color.
+
+=item link_color I<R G B>
+
+=item sign2_color I<R G B>
+
+Color of the lines drawn between the markers. Default is link_color 255 255 0.
+
+=item sign1_color I<R G B>|none
+
+Color of the lines drawn for uni-directional GnuPG/PGP signatures. Default is
+link_color none.
+
+=item font F<fontfile>
+
+Full pathname to the .ttf font used for the labels. Default is
+font F</usr/share/ircmarkers/fixed_01.ttf>.
+
+=item ptsize I<size>
+
+Size in points of the labels. Default is ptsize 6.
+
+=item overlap F<overlapcorrector>
+
+Full pathname to the binary that moves the labels around to reduce overlap.
+Default is overlapcorrector F</usr/lib/ircmarkers/overlap>.
+
+=item overlap_correction on|off
+
+Whether to use the overlap corrector or not. Default is overlap_correction on.
+Turn it off if you have really many labels.
+
+=item quiet on|off
+
+Be quiet. Default is quiet off.
+
+=item #include "F<configfile>"
+
+Read auxillary config file.
+
+=back
+
+=head1 EXAMPLES
+
+B<ircmarkers -x -10.4/29.4 -y 32/72 coordinates.txt europe.jpg mutt-eu.jpg>
+
+	read dl.jpg
+	write debian.de.jpg
+	lat 44/56
+	lon 4/20
+	label_color 0 0 255
+	
+	#include "debian.de.txt"
+	#include "debian.de.keys"
 
 =head1 BUGS
 
 None known.
-
-=head1 NOTES
 
 =head1 SEE ALSO
 
@@ -169,6 +333,10 @@ Image::WorldMap: http://www.astray.com/WorldMap/
 
 IrcMarkers was written by Christoph Berg <cb@df7cb.de>.
 
+Thanks go to Uli Martens for the "map of trust" idea.
+
+The IrcMarkers homepage is at B<http://www.df7cb.de/projects/ircmarkers/>.
+
 =head1 COPYRIGHT AND LICENSE
 
 Copyright (C) 2004 Christoph Berg <cb@df7cb.de>
@@ -191,7 +359,7 @@ IrcMarkers is an improved version of MapMarkers.
 
 Copyright (C) 2003 Guillaume Leclanche (Mo-Ize) <mo-ize@nul-en.info>
 
-The font provides with this package, fixed_01.ttf, has been created by the
+The font provided with this package, fixed_01.ttf, has been created by the
 Orgdot team, http://www.orgdot.com/aliasfonts/.
 
 (C) 2001 http://www.orgdot.com
