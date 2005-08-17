@@ -1,21 +1,12 @@
 #!/usr/bin/make -f
-# -*- makefile -*-
-# Sample debian/rules that uses debhelper.
-# GNU copyright 1997 to 1999 by Joey Hess.
 
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
 VERSION=$(shell dpkg-parsechangelog 2>&1|egrep ^Version|cut -d " " -f 2)
 
-configure: configure-stamp
-configure-stamp:
-	dh_testdir
-	touch configure-stamp
-
 build: build-stamp
-
-build-stamp: configure-stamp 
+build-stamp:
 	dh_testdir
 	$(MAKE) VERSION="ircmarkers $(VERSION)"
 	touch build-stamp
@@ -42,7 +33,7 @@ binary-indep: build install
 binary-arch: build install
 	dh_testdir
 	dh_testroot
-	dh_installchangelogs 
+	dh_installchangelogs
 	dh_installdocs
 	dh_installexamples
 	dh_installman

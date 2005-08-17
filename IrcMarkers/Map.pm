@@ -189,6 +189,7 @@ sub compute_overlap {
 	for(my $m = 0; $m < @{$config->{markers}}; $m++) {
 		my $marker = $config->{markers}->[$m];
 		next unless $marker->{visible};
+		next if $marker->{text} eq "";
 		my $ref = $marker->{LABEL_BOUNDS} or die;
 		printf W ("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 					$m,
