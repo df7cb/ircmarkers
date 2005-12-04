@@ -2,10 +2,12 @@ ircmarkers (0.7) unstable; urgency=low
 
   * Support markers without label (thanks to Torbjörn Svensson for the
     suggestion).
+  * Bump Standards-Version.
+  * Finally an upload after 0.6 being used locally for a year...
 
- -- Christoph Berg <cb@df7cb.de>  Wed, 17 Aug 2005 15:03:21 +0200
+ -- Christoph Berg <myon@debian.org>  Sun,  4 Dec 2005 22:11:31 +0100
 
-ircmarkers (0.6) unstable; urgency=low
+ircmarkers (0.6) unreleased; urgency=low
 
   * Could previously not draw markers with lat = 0.
   * Add support for HTML image maps.

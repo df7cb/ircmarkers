@@ -52,6 +52,7 @@ sub new {
 		quiet => 0,
 		overlap => '/usr/lib/ircmarkers/overlap',
 		overlap_correction => 1,
+		help_convert_crop => 0,
 	};
 	bless $config;
 }

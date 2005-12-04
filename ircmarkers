@@ -32,10 +32,10 @@ use Getopt::Long;
 use IrcMarkers::File;
 use IrcMarkers::Map;
 
-my $VERSION = "0.6";
+my $VERSION = "0.7";
 
 sub VERSION_MESSAGE {
-	print "IrcMarkers $VERSION (C) 2004 Christoph Berg <cb\@df7cb.de>, GNU GPL.\n";
+	print "IrcMarkers $VERSION (C) 2004, 2005 Christoph Berg <cb\@df7cb.de>, GNU GPL.\n";
 }
 
 sub HELP_MESSAGE {
@@ -58,6 +58,7 @@ GetOptions(
 	'y=s' => \$y,
 	'q' => \$config->{quiet},
 	'o=s' => sub { $config->parse($_[1]); },
+	crop => \$config->{help_convert_crop},
 	help => sub { HELP_MESSAGE(); },
 	version => sub { VERSION_MESSAGE(); exit(0); },
 ) or HELP_MESSAGE();
@@ -79,6 +80,31 @@ $config->{write} = $ARGV[2] if $ARGV[2];
 
 die "no input map" unless $config->{read};
 die "no output map" unless $config->{write};
+
+# Print a correct 'convert -crop' command. More info at convert(1)
+if ($config->{help_convert_crop}) {
+	use Image::Size;
+	my $type;
+	($config->{w}, $config->{h}, $type) = imgsize($config->{read});
+
+	# fallback
+	$config->{view_west} = $config->{west} unless defined $config->{view_west};
+	$config->{view_east} = $config->{east} unless defined $config->{view_east};
+	$config->{view_north} = $config->{north} unless defined $config->{view_north};
+	$config->{view_south} = $config->{south} unless defined $config->{view_south};
+	
+	# print the info
+	printf("\$ convert -crop %dx%d+%d+%d %s new.%s\n",
+			$config->{w}, # width
+			$config->{h}, # height
+			$config->{w} * ($config->{view_east} - $config->{view_west}) / ($config->{east} - $config->{west}), # x
+			$config->{h} * ($config->{view_north} - $config->{view_south}) / ($config->{north} - $config->{south}), # y
+			$config->{read}, # src file
+			lc $type, # file type
+		);
+	
+	exit;
+}
 
 my $map = IrcMarkers::Map->new($config);
 
