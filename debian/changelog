@@ -1,3 +1,10 @@
+ircmarkers (0.8-1) unstable; urgency=low
+
+  * Disable non-functional help_convert_crop code.
+  * Non-native package.
+
+ -- Christoph Berg <myon@debian.org>  Fri, 16 Dec 2005 00:55:23 +0100
+
 ircmarkers (0.7) unstable; urgency=low
 
   * Support markers without label (thanks to Torbjörn Svensson for the

@@ -1,6 +1,9 @@
-VERSION=ircmarkers
+NAME=ircmarkers
 INSTALL_PROGRAMM=install
 DEBUG=-DDEBUG
+VERSION=$(shell dpkg-parsechangelog 2>&1 | perl -ne 'print $$1 if /^Version: ([^-]*)/')
+TGZ=$(NAME)_$(VERSION).orig.tar.gz
+TGZ_DIR=$(NAME)-$(VERSION)
 
 all: overlap ircmarkers.1
 
@@ -8,7 +11,7 @@ overlap: overlap.c
 	gcc -O2 -Wall $(DEBUG) -o overlap overlap.c
 
 ircmarkers.1: ircmarkers
-	pod2man --release="$(VERSION)" --center="User Documentation" $< > $@
+	pod2man --release="$(NAME)" --center="User Documentation" $< > $@
 
 ircmarkers.man: ircmarkers.1
 	nroff -man $< > $@
@@ -30,4 +33,13 @@ tags:
 clean:
 	rm -f overlap ircmarkers.1 ircmarkers.man ircmarkers.html tags pod2htm* example.jpg
 
-.PHONY: all install tags clean
+dist:
+	[ ! -f ../$(TGZ) ]
+	mkdir ../$(TGZ_DIR)
+	cp -a . ../$(TGZ_DIR)
+	rm -rf ../$(TGZ_DIR)/debian
+	find ../$(TGZ_DIR) -name .svn | xargs rm -rf
+	cd .. && tar cvz -f $(TGZ) $(TGZ_DIR)
+	rm -rf ../$(TGZ_DIR)
+
+.PHONY: all install tags clean dist
