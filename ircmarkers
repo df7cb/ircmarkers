@@ -447,7 +447,7 @@ of memory. Precompute the map you are going to use, i.e. downsample it to the
 target size using Imagemagick's I<convert> or IrcMarkers view_* functions.
 
 Please report bugs in IrcMarkers using the Debian bug tracking system. The
-IrcMarkers bug page is at http://bugs.debian.org/ircmarkers.
+IrcMarkers bug page is at B<http://bugs.debian.org/ircmarkers>.
 
 =head1 SEE ALSO
 
