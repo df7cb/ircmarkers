@@ -32,7 +32,7 @@ use Getopt::Long;
 use IrcMarkers::File;
 use IrcMarkers::Map;
 
-my $VERSION = "0.7";
+my $VERSION = "0.9";
 
 sub VERSION_MESSAGE {
 	print "IrcMarkers $VERSION (C) 2004, 2005 Christoph Berg <cb\@df7cb.de>, GNU GPL.\n";
@@ -407,6 +407,10 @@ the overlap corrector.
 
 Whether to use the overlap corrector or not. Default is overlap_correction on.
 Turn it off if you have really many labels.
+
+=item recv-keys
+
+Call gpg --recv-keys (most useful with B<ircmarkers -o recv-keys>).
 
 =item quiet on|off
 

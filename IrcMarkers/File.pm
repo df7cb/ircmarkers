@@ -191,6 +191,8 @@ sub parse {
 		$config->{overlap_correction} = 1;
 	} elsif(/^overlap_correction (off|no)/) {
 		$config->{overlap_correction} = 0;
+	} elsif(/^recv(?:-keys)/) {
+		$config->{recv} = 1;
 	} elsif(/^quiet (on|yes)/) {
 		$config->{quiet} = 1;
 	} elsif(/^quiet (off|no)/) {
@@ -262,6 +264,10 @@ sub get_gpg_links {
 	my $config = shift;
 
 	my $keys = join ' ', keys %{$config->{gpg}};
+	if ($config->{recv}) {
+		system "gpg --recv-keys $keys";
+	}
+
 	open GPG, "gpg --list-sigs --with-colon --fixed-list-mode --fast-list-mode $keys |" or die "gpg: $!";
 	my ($key, $src);
 	while(<GPG>) {
