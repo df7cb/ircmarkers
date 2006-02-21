@@ -5,7 +5,7 @@ Upstream Author: Christoph Berg <cb@df7cb.de>
 
 Copyright:
 
-Copyright (C) 2004, 2005 Christoph Berg <cb@df7cb.de>
+Copyright (C) 2004, 2005, 2006 Christoph Berg <cb@df7cb.de>
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
@@ -18,11 +18,11 @@ Copyright (C) 2004, 2005 Christoph Berg <cb@df7cb.de>
 
   You should have received a copy of the GNU General Public License with
   the Debian GNU/Linux distribution in file /usr/share/common-licenses/GPL;
-  if not, write to the Free Software Foundation, Inc., 59 Temple Place,
-  Suite 330, Boston, MA  02111-1307  USA
+  if not, write to the Free Software Foundation, Inc., 51 Franklin St,
+  Fifth Floor, Boston, MA  02110-1301 USA
 
 IrcMarkers is an improved version of MapMarkers.
-Copyright (C) 2003 Guillaume Leclanche (Mo-Ize) <mo-ize@nul-en.info>
+Copyright (C) 2002, 2003 Guillaume Leclanche (Mo-Ize) <mo-ize@nul-en.info>
 
   This program has been really inspired by two programs:
 
