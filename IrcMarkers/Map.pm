@@ -183,7 +183,7 @@ sub compute_overlap {
 		my $marker = $config->{markers}->[$m];
 		next unless $marker->{visible};
 		next if $marker->{text} eq "";
-		my $ref = $marker->{LABEL_BOUNDS} or die;
+		my $ref = $marker->{LABEL_BOUNDS} or die; # TODO: use real bounds here
 		printf W ("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 					$m,
 					$marker->{x},
@@ -194,10 +194,10 @@ sub compute_overlap {
 					$marker->{y} + $marker->{dot_size},
 					2 * $marker->{dot_size},
 					2 * $marker->{dot_size},
-					$ref->[0], # left x
-					$ref->[2], # right x
-					$ref->[5], # upper y
-					$ref->[1], # lower y
+					$marker->{x} + $ref->[0], # left x
+					$marker->{x} + $ref->[2], # right x
+					$marker->{y} + $ref->[5], # upper y
+					$marker->{y} + $ref->[1], # lower y
 					$ref->[2] - $ref->[0], # width
 					$ref->[1] - $ref->[5]  # height
 		);

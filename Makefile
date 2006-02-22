@@ -1,6 +1,6 @@
 NAME=ircmarkers
 INSTALL_PROGRAMM=install
-DEBUG=-DDEBUG
+#DEBUG=-DDEBUG
 VERSION=$(shell dpkg-parsechangelog 2>&1 | perl -ne 'print $$1 if /^Version: ([^-]*)/')
 TGZ=$(NAME)_$(VERSION).orig.tar.gz
 TGZ_DIR=$(NAME)-$(VERSION)
@@ -8,7 +8,7 @@ TGZ_DIR=$(NAME)-$(VERSION)
 all: overlap ircmarkers.1
 
 overlap: overlap.c
-	gcc -O2 -Wall $(DEBUG) -o overlap overlap.c
+	gcc -g -O2 -Wall $(DEBUG) -o overlap overlap.c
 
 ircmarkers.1: ircmarkers
 	pod2man --release="$(NAME)" --center="User Documentation" $< > $@

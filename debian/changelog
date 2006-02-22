@@ -1,9 +1,10 @@
 ircmarkers (0.9-1) unstable; urgency=low
 
   * Add recv-keys option.
+  * Fix overlap.c memory allocator and clean up code.
   * Update copyright stuff.
 
- -- Christoph Berg <myon@debian.org>  Tue, 21 Feb 2006 21:41:36 +0100
+ -- Christoph Berg <myon@debian.org>  Wed, 22 Feb 2006 01:46:11 +0100
 
 ircmarkers (0.8-1) unstable; urgency=low
 
