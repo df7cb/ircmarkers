@@ -20,7 +20,7 @@ use Getopt::Long;
 use IrcMarkers::File;
 use IrcMarkers::Map;
 
-my $VERSION = "0.9";
+my $VERSION = "0.10";
 
 sub VERSION_MESSAGE {
 	print "IrcMarkers $VERSION (C) 2004, 2005, 2006 Christoph Berg <cb\@df7cb.de>, GNU GPL.\n";
@@ -53,6 +53,20 @@ GetOptions(
 
 HELP_MESSAGE() unless $ARGV[0];
 $config->read($ARGV[0]);
+
+if($config->{pisg}) {
+	foreach my $marker (@{$config->{markers}}) {
+		next unless $marker->{text};
+		print "<user nick=\"$marker->{text}\"";
+		print " alias=\"$marker->{alias}\"" if $marker->{alias};
+		print " link=\"$marker->{href}\"" if $marker->{href};
+		print " pic=\"$marker->{pic}\"" if $marker->{pic};
+		print " bigpic=\"$marker->{bigpic}\"" if $marker->{bigpic};
+		print " sex=\"$marker->{sex}\"" if $marker->{sex};
+		print ">\n";
+	}
+	exit 0;
+}
 
 if($x) { # after $config->read so -x can override lon
 	$x =~ /(.*)\/(.*)/ or die "invalid -x format";
@@ -308,6 +322,10 @@ Dots are filled (dot) or hollow (circle). Default is dot.
 
 Link target to use in an imagemap.
 
+=item alias|pic|bigpic|sex I<string>
+
+Options for export to pisg(1), see the B<pisg> option below.
+
 =back
 
 =head2 Link Definition and Options
@@ -396,6 +414,12 @@ the overlap corrector.
 Whether to use the overlap corrector or not. Default is overlap_correction on.
 Turn it off if you have really many labels.
 
+=item pisg
+
+Instead of writing a map, print a config file suitable for pisg(1), most useful
+with B<ircmarkers -o pisg> I<file>. The exported marker options are B<alias>,
+B<pic>, B<bigpic>, B<sex>, and B<href> (the latter as B<link>).
+
 =item recv-keys
 
 Call gpg --recv-keys (most useful with B<ircmarkers -o recv-keys>).
@@ -449,7 +473,7 @@ L<GD(3)> - GD version 2
 
 =back
 
-=head2 Programs similar to IrcMarkers
+=head2 Programs related to IrcMarkers
 
 =over
 
@@ -459,11 +483,15 @@ MapMarkers: http://www.nul-en.info/mapmarkers/ - IrcMarkers' predecessor
 
 =item *
 
-xplanet: http://xplanet.sourceforge.net/
+xplanet(1): http://xplanet.sourceforge.net/
 
 =item *
 
 Image::WorldMap: http://www.astray.com/WorldMap/
+
+=item *
+
+pisg(1): http://pisg.sourceforge.net/
 
 =back
 

@@ -1,3 +1,9 @@
+ircmarkers (0.10-1) unstable; urgency=low
+
+  * Add option for data export in pisg(1) <user> syntax.
+
+ -- Christoph Berg <myon@debian.org>  Fri, 28 Jul 2006 17:00:19 +0200
+
 ircmarkers (0.9-1) unstable; urgency=low
 
   * Add recv-keys option.

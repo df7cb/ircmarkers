@@ -110,12 +110,17 @@ sub parse_options {
 			$item->{font} =~ s!^~/!$ENV{HOME}/!;
 		} elsif($opt =~ s/^(?:font|pt)size (\d+)//) {
 			$item->{ptsize} = $1;
-		} elsif($opt =~ s/^href (\S+)//) {
-			$item->{href} = $1;
 		} elsif($opt =~ s/^(?:link|sign2)_colou?r (\d+) (\d+) (\d+)//) {
 			$item->{link_color} = [$1, $2, $3];
 		} elsif($opt =~ s/^(?:link|sign2)_colou?r (no(ne?)|off)//) {
 			delete $item->{link_color};
+		# (mostly) pisg options
+		} elsif($opt =~ s/^alias "(.*?)"//) {
+			$item->{alias} = $item->{alias} ? "$item->{alias} $1" : $1;
+		} elsif($opt =~ s/^alias (\S+)//) {
+			$item->{alias} = $item->{alias} ? "$item->{alias} $1" : $1;
+		} elsif($opt =~ s/^(href|(?:big)?pic|sex) ("?)(\S+)\2//) {
+			$item->{$1} = $3;
 		# error
 		} else {
 			$config->parser_warn("unknown option: $opt");
@@ -131,12 +136,12 @@ sub parse {
 	my $config = shift;
 	$_ = shift;
 
-	return if /^\s*$/;
+	s/^\s+//;
 	if(/^#include [<"](.+)[">]/) { # include next config file
 		$config->read($1);
 		return;
 	}
-	return if /^\s*#/;
+	return if /^(#|$)/;
 
 	s/^([^"]+)/despace($1)/e; # compress space outside of quotes
 	s/([^"]+)$/despace($1)/e;
@@ -184,6 +189,8 @@ sub parse {
 		$config->{overlap_correction} = 1;
 	} elsif(/^overlap_correction (off|no)/) {
 		$config->{overlap_correction} = 0;
+	} elsif(/^pisg/) {
+		$config->{pisg} = 1;
 	} elsif(/^recv(?:-keys)/) {
 		$config->{recv} = 1;
 	} elsif(/^quiet (on|yes)/) {
@@ -208,21 +215,25 @@ sub parse {
 		my ($lat, $lon, $text, $opt) = ($1, $2, $3, $4);
 		$lat =~ s/,/./;
 		$lon =~ s/,/./;
-		$config->{markers}->[$markernr]->{text} = $text;
-		$config->{markers}->[$markernr]->{lat} = $lat;
-		$config->{markers}->[$markernr]->{lon} = $lon;
-		$config->{markerindex}->{$text} = $markernr;
-		$config->default_options($config->{markers}->[$markernr]);
-		$config->parse_options($config->{markers}->[$markernr], $markernr, $opt);
-		$markernr++;
+		my $nr = $config->{markerindex}->{$text};
+		if(not defined $nr or $config->{markers}->[$nr]->{lat}) { # create new marker when coordinates are already there
+			$nr = $markernr++;
+		}
+		$config->{markers}->[$nr]->{text} = $text;
+		$config->{markers}->[$nr]->{lat} = $lat;
+		$config->{markers}->[$nr]->{lon} = $lon;
+		$config->{markerindex}->{$text} = $nr;
+		$config->default_options($config->{markers}->[$nr]);
+		$config->parse_options($config->{markers}->[$nr], $nr, $opt);
 	} elsif(/^"([^"]*)"(.*)/) { # marker with options
 		my ($text, $opt, $i) = ($1, $2);
-		unless(defined ($i = $config->{markerindex}->{$text})) {
-			$config->parser_warn("marker $text not defined yet");
-			return;
+		my $nr = $config->{markerindex}->{$text};
+		if(not defined $nr) {
+			$nr = $markernr++;
+			$config->{markers}->[$nr]->{text} = $text;
 		}
-		$config->{markers}->[$i] ||= {};
-		$config->parse_options($config->{markers}->[$i], $config->{markerindex}->{$text}, $opt);
+		$config->default_options($config->{markers}->[$nr]);
+		$config->parse_options($config->{markers}->[$nr], $config->{markerindex}->{$text}, $opt);
 	} elsif(/^label ([+-]?\d+) ([+-]?\d+) "([^"]+)"(.*)/) {
 		$config->{yxlabels}->[$labelnr] = { labely => $1, labelx => $2, text => $3 };
 		my $opt = $4;

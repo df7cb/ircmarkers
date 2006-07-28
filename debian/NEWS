@@ -1,0 +1,6 @@
+ircmarkers (0.10-1) unstable; urgency=low
+
+  * ircmarkers now supports exporting its config in pisg(1) syntax, so you can
+    share the per-nickname part of the config files for both programs.
+
+ -- Christoph Berg <myon@debian.org>  Fri, 28 Jul 2006 19:06:06 +0200
