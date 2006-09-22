@@ -1,6 +1,6 @@
 Source: ircmarkers
 Section: graphics
-Priority: optional
+Priority: extra
 Maintainer: Christoph Berg <myon@debian.org>
 Build-Depends: debhelper (>= 4.0.0)
 Standards-Version: 3.7.2

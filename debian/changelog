@@ -1,3 +1,9 @@
+ircmarkers (0.10-2) unstable; urgency=low
+
+  * Move to Priority: extra.
+
+ -- Christoph Berg <myon@debian.org>  Fri, 22 Sep 2006 13:39:44 +0200
+
 ircmarkers (0.10-1) unstable; urgency=low
 
   * Add option for data export in pisg(1) <user> syntax.
