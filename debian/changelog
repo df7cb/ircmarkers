@@ -1,8 +1,9 @@
 ircmarkers (0.10-2) unstable; urgency=low
 
   * Move to Priority: extra.
+  * Add debtags to debian/control.
 
- -- Christoph Berg <myon@debian.org>  Fri, 22 Sep 2006 13:39:44 +0200
+ -- Christoph Berg <myon@debian.org>  Fri, 22 Sep 2006 14:28:33 +0200
 
 ircmarkers (0.10-1) unstable; urgency=low
 

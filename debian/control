@@ -16,3 +16,4 @@ Description: place markers on maps at given coordinates
  each marker, to create "maps of trust".
  .
  http://www.df7cb.de/projects/ircmarkers/
+Tag: field::geography, implemented-in::perl, interface::commandline, role::program, scope::utility, use::TODO, use::entertaining, works-with-format::jpg, works-with-format::png, works-with::image:raster
