@@ -225,6 +225,22 @@ sub parse {
 		$config->{markerindex}->{$text} = $nr;
 		$config->default_options($config->{markers}->[$nr]);
 		$config->parse_options($config->{markers}->[$nr], $nr, $opt);
+	} elsif(/^([A-Z]{2}\d{2}[A-Z]{2}) "([^"]*)"(.*)/i) { # Maidenhead locator
+		my ($loc, $text, $opt) = ($1, $2, $3);
+		my ($p1, $p2, $p3, $p4, $p5, $p6) = unpack 'AAAAAA', uc($loc);
+		($p1, $p2, $p3, $p4, $p5, $p6) = (ord($p1)-ord('A'), ord($p2)-ord('A'), ord($p3)-ord('0'), ord($p4)-ord('0'), ord($p5)-ord('A'), ord($p6)-ord('A') );
+		my $lat = ($p2*10) + $p4 + (($p6+0.5)/24) - 90;
+		my $lon = ($p1*20) + ($p3*2) + (($p5+0.5)/12) - 180;
+		my $nr = $config->{markerindex}->{$text};
+		if(not defined $nr or $config->{markers}->[$nr]->{lat}) { # create new marker when coordinates are already there
+			$nr = $markernr++;
+		}
+		$config->{markers}->[$nr]->{text} = $text;
+		$config->{markers}->[$nr]->{lat} = $lat;
+		$config->{markers}->[$nr]->{lon} = $lon;
+		$config->{markerindex}->{$text} = $nr;
+		$config->default_options($config->{markers}->[$nr]);
+		$config->parse_options($config->{markers}->[$nr], $nr, $opt);
 	} elsif(/^"([^"]*)"(.*)/) { # marker with options
 		my ($text, $opt, $i) = ($1, $2);
 		my $nr = $config->{markerindex}->{$text};
