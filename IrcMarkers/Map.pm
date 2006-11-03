@@ -283,8 +283,8 @@ sub draw_line_new {
 	my $image = $config->{IMAGE};
 
 	my $color = $image->colorResolve(@{$item->{link_color} || $config->{link_color}});
-	$image->line($item->{x0}, $item->{y0}, $item->{x1}, $item->{y1}, $color);
-	#$image->line($item->{x0}, $item->{y0}, $item->{x1}, $item->{y1}, gdStyled);
+	$image->line($item->{xs}, $item->{ys}, $item->{xd}, $item->{yd}, $color);
+	#$image->line($item->{xs}, $item->{ys}, $item->{xd}, $item->{yd}, gdStyled);
 }
 
 sub write {
