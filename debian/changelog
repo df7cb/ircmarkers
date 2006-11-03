@@ -2,8 +2,9 @@ ircmarkers (0.11-1) unstable; urgency=low
 
   * Support Maidenhead (QTH) locator format.
   * Do not bark on markers without coordinates.
+  * Draw US-AU links across the Pacific.
 
- -- Christoph Berg <myon@debian.org>  Fri, 13 Oct 2006 15:18:32 +0200
+ -- Christoph Berg <myon@debian.org>  Fri,  3 Nov 2006 16:41:57 +0100
 
 ircmarkers (0.10-2) unstable; urgency=low
 

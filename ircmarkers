@@ -131,11 +131,22 @@ if($config->{link_color} and $config->{gpg}) {
 $config->set_line_style();
 if($config->{links}) {
 	foreach my $link (@{$config->{links}}) {
-		print "$config->{markers}->[$link->{src}]->{text} $link->{arrow} $config->{markers}->[$link->{dst}]->{text}\n" unless $config->{quiet};
-		$link->{x0} = $config->{markers}->[$link->{src}]->{x};
-		$link->{y0} = $config->{markers}->[$link->{src}]->{y};
-		$link->{x1} = $config->{markers}->[$link->{dst}]->{x};
-		$link->{y1} = $config->{markers}->[$link->{dst}]->{y};
+		my $src = $config->{markers}->[$link->{src}];
+		my $dst = $config->{markers}->[$link->{dst}];
+		print "$src->{text} $link->{arrow} $dst->{text}\n" unless $config->{quiet};
+		if ($src->{lon} > $dst->{lon}) {
+			($src, $dst) = ($dst, $src);
+		}
+		$link->{x0} = $src->{x};
+		$link->{y0} = $src->{y};
+		$link->{x1} = $dst->{x};
+		$link->{y1} = $dst->{y};
+		if ($src->{lon} - $dst->{lon} < -180) { # cross-Pacific links
+			$link->{x1} = $dst->{x} - $config->{w};
+			$config->draw_line_new($link);
+			$link->{x0} = $src->{x} + $config->{w};
+			$link->{x1} = $dst->{x};
+		}
 		$config->draw_line_new($link);
 	}
 }
