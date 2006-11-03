@@ -260,14 +260,18 @@ The following directives can be used in the config file:
 
 =item I<lat> I<lon> "I<marker>" I<options>
 
+=item I<aa11aa> "I<marker>" I<options>
+
 =item "I<marker>" I<options>
 
 Place marker with label I<marker> on map at given (decimal) coordinates.
 Use negative values for south/east, positive for north/west.
 This format is compatible with the xplanet syntax.
+Also recognized are Maidenhead (QTH) locators.
 The following is a marker for Myon in Germany:
 
-B<49.2532 7.0425 "Myon">
+ 49.2532 7.0425 "Myon"
+ JN39PF "Myon"
 
 =item label I<y> I<x> "I<text>"
 
@@ -551,6 +555,8 @@ Thanks go to Uli Martens for the "map of trust" idea.
 Alexander Wirt suggested the capability to draw selected parts of the map.
 
 Elmar Hoffmann suggested several error checks and config options.
+
+Rico Gloeckner suggested to support Maidenhead locators.
 
 The IrcMarkers homepage is at B<http://www.df7cb.de/projects/ircmarkers/>.
 
