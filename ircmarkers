@@ -140,7 +140,6 @@ if($config->{links}) {
 		($link->{xs}, $link->{ys}) = ($src->{x}, $src->{y});
 		($link->{xd}, $link->{yd}) = ($dst->{x}, $dst->{y});
 		if ($src->{lon} - $dst->{lon} < -180) { # cross-Pacific links
-			print "Pacific!\n";
 			($link->{xd}) = $config->coord2pixel($dst->{lat}, $dst->{lon}-360);
 			$config->draw_line_new($link);
 			($link->{xs}) = $config->coord2pixel($src->{lat}, $src->{lon}+360);
