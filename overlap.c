@@ -207,8 +207,7 @@ main(int argc, char* argv[])
             assert(nm);
             markers = nm;
         }
-        if (15 !=
-            scanf("%u\t%u\t%u\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+        i = scanf("%u\t%u\t%u\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
                 &(markers[nb_markers].id),
                 &(markers[nb_markers].x),
                 &(markers[nb_markers].y),
@@ -223,8 +222,9 @@ main(int argc, char* argv[])
                 &(markers[nb_markers].txt.top),
                 &(markers[nb_markers].txt.bottom),
                 &(markers[nb_markers].txt.width),
-                &(markers[nb_markers].txt.height)))
-            assert(0);
+                &(markers[nb_markers].txt.height));
+        if (i == -1) continue;
+        if (i != 15) assert(0);
 #ifdef DEBUG
         markers[nb_markers].orig_txt_x = markers[nb_markers].txt.left;
         markers[nb_markers].orig_txt_y = markers[nb_markers].txt.bottom;
