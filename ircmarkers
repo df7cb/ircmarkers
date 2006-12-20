@@ -32,8 +32,8 @@ sub HELP_MESSAGE {
 usage: $0 [options] config [inputmap outputmap]
 -q             be quiet
 -o command     configuration command
--x west/east   latitude bounds of input map
--y south/north longitude bounds of input map
+-x west/east   longitude bounds of input map
+-y south/north latitude bounds of input map
 EOT
 	exit 0;
 }
@@ -242,7 +242,7 @@ the map.
 
 Declare input map dimensions. Unless specified otherwise in the config file,
 the map is assumed to be in mercator projection. -y specifies the lower/upper
-longitude coordinates, -x the left/right edge latitude. Per default, the map is
+latitude coordinates, -x the left/right edge longitude. Per default, the map is
 assumed to be a world map (-y -90/90 -x -180/180).
 
 =item -o I<command>
