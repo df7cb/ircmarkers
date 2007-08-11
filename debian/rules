@@ -14,13 +14,13 @@ build-stamp:
 clean:
 	dh_testdir
 	rm -f build-stamp configure-stamp
-	-$(MAKE) clean
-	dh_clean 
+	$(MAKE) clean
+	dh_clean
 
 install: build
 	dh_testdir
 	dh_testroot
-	dh_clean -k 
+	dh_clean -k
 	dh_installdirs
 	$(MAKE) install DESTDIR=$(CURDIR)/debian/ircmarkers
 
