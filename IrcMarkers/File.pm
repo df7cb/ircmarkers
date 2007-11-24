@@ -211,7 +211,7 @@ sub parse {
 		$config->parse_options($config->{links}->[$linknr], undef, $opt);
 		$linknr++;
 	# marker definitions
-	} elsif(/^([\d.,-]+) ([\d.,-]+) "([^"]*)"(.*)/) { # xplanet marker file format
+	} elsif(/^([\d.,+-]+) ([\d.,+-]+) "([^"]*)"(.*)/) { # xplanet marker file format
 		my ($lat, $lon, $text, $opt) = ($1, $2, $3, $4);
 		$lat =~ s/,/./;
 		$lon =~ s/,/./;
