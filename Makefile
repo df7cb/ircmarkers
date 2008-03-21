@@ -35,6 +35,7 @@ clean:
 
 dist:
 	[ ! -f ../$(TGZ) ]
+	[ -d debian ] && fakeroot debian/rules clean
 	mkdir ../$(TGZ_DIR)
 	cp -a . ../$(TGZ_DIR)
 	rm -rf ../$(TGZ_DIR)/debian
