@@ -1,4 +1,4 @@
-# Copyright (C) 2004, 2005, 2006 Christoph Berg <cb@df7cb.de>
+# Copyright (C) 2004-2008 Christoph Berg <cb@df7cb.de>
 #
 # This file originated from the mapmarkers distribution:
 #

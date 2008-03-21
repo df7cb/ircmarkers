@@ -1,3 +1,9 @@
+ircmarkers (0.14-1) unstable; urgency=low
+
+  * Support coordinates in N 51° 11.123 E 006° 25.846 and similar formats.
+
+ -- Christoph Berg <myon@debian.org>  Fri, 21 Mar 2008 16:46:02 +0100
+
 ircmarkers (0.13-1) unstable; urgency=low
 
   * Allow + prefix on coordinates.

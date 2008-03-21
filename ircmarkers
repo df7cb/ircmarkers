@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# Copyright (C) Christoph Berg <cb@df7cb.de>
+# Copyright (C) 2003-2008 Christoph Berg <cb@df7cb.de>
 #
 # Part of this file originate from example.pl from the MapMarker distribution:
 #   Author  :  Guillaume Leclanche (Mo-Ize) <mo-ize@nul-en.info>
@@ -20,10 +20,10 @@ use Getopt::Long;
 use IrcMarkers::File;
 use IrcMarkers::Map;
 
-my $VERSION = "0.10";
+my $VERSION = "0.14";
 
 sub VERSION_MESSAGE {
-	print "IrcMarkers $VERSION (C) 2004, 2005, 2006 Christoph Berg <cb\@df7cb.de>, GNU GPL.\n";
+	print "IrcMarkers $VERSION (C) 2003-2008 Christoph Berg <cb\@df7cb.de>, GNU GPL.\n";
 }
 
 sub HELP_MESSAGE {
@@ -268,13 +268,22 @@ The following directives can be used in the config file:
 
 =item "I<marker>" I<options>
 
-Place marker with label I<marker> on map at given (decimal) coordinates.
+Place marker with label I<marker> on map at given coordinates.
 Use negative values for south/east, positive for north/west.
-This format is compatible with the xplanet syntax.
-Also recognized are Maidenhead (QTH) locators.
-The following is a marker for Myon in Germany:
+This (decimal) format is compatible with the xplanet syntax.
 
  49.2532 7.0425 "Myon"
+
+Alternative formats recognized are:
+
+ N51°11.123 E006°25.846
+ N 51 11.123 E 006 25.846
+ N 51° 11' 7.38" E 006° 25' 50.76"
+
+The noise characters °'" are optional.
+
+Also recognized are Maidenhead (QTH) locators.
+
  JN39PF "Myon"
 
 =item label I<y> I<x> "I<text>"
@@ -467,6 +476,7 @@ B<ircmarkers -x -10.4/29.4 -y 32/72 coordinates.txt europe.jpg mutt-eu.jpg>
 	label_color 0 255 0
 	49.2532 7.0425 "Myon"
 	50.8574 6.4585 "formorer" label_color 255 255 0
+	N 51° 11.123 E 006° 25.846 "GC1ACE3"
 	#include "debian.de.txt"
 	#include "debian.de.keys"
 
@@ -566,7 +576,7 @@ The IrcMarkers homepage is at B<http://www.df7cb.de/projects/ircmarkers/>.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2004, 2005, 2006 Christoph Berg <cb@df7cb.de>
+Copyright (C) 2003-2008 Christoph Berg <cb@df7cb.de>
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software

@@ -1,4 +1,4 @@
-# Copyright (C) 2004, 2005, 2006 Christoph Berg <cb@df7cb.de>
+# Copyright (C) 2004-2008 Christoph Berg <cb@df7cb.de>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,6 +20,17 @@ sub despace {
 	my $s = shift;
 	$s =~ s/\s+/ /g;
 	return $s;
+}
+
+sub parse_coord {
+	$_ = shift;
+	s/^[NE+]\s*//;
+	s/^[SW-]\s*/-/;
+	s/[°'"]+/ /g; # noise
+	s/,/./g;
+	s/(\d+) +([\d.]+)/$1 + $2 \/ 60.0/e;
+	s/([\d.]+) +([\d.]+)/$1 + $2 \/ 3600.0/e;
+	return $_;
 }
 
 sub new {
@@ -211,10 +222,12 @@ sub parse {
 		$config->parse_options($config->{links}->[$linknr], undef, $opt);
 		$linknr++;
 	# marker definitions
-	} elsif(/^([\d.,+-]+) ([\d.,+-]+) "([^"]*)"(.*)/) { # xplanet marker file format
-		my ($lat, $lon, $text, $opt) = ($1, $2, $3, $4);
-		$lat =~ s/,/./;
-		$lon =~ s/,/./;
+	} elsif(/^([NS+-]? ?[\d.,°]+) ([EW+-]? ?[\d.,°]+) "([^"]*)"(.*)/ or
+		# N 51° 11.123 E 006° 25.846
+		/^([NS+-]? ?\d*[° ]+[\d.,]+'?) ([EW+-]? ?\d*[° ]+[\d.,]+'?) "([^"]*)"(.*)/ or
+		# N 51° 34' 11.123 E 006° 29' 25.846
+		/^([NS+-]? ?\d*[° ]+\d+[' ][\d.,]+"?) ([EW+-]? ?\d*[° ]+\d+[' ][\d.,]+"?) "([^"]*)"(.*)/) {
+		my ($lat, $lon, $text, $opt) = (parse_coord($1), parse_coord($2), $3, $4);
 		my $nr = $config->{markerindex}->{$text};
 		if(not defined $nr or $config->{markers}->[$nr]->{lat}) { # create new marker when coordinates are already there
 			$nr = $markernr++;
