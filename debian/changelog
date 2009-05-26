@@ -1,3 +1,10 @@
+ircmarkers (0.14-2) unstable; urgency=low
+
+  * Suggest ttf-dejavu-core, our fixed_01.ttf doesn't support the more fancy
+    unicode characters. (Closes: 528220)
+
+ -- Christoph Berg <myon@debian.org>  Tue, 26 May 2009 22:40:33 +0200
+
 ircmarkers (0.14-1) unstable; urgency=low
 
   * Support coordinates in N 51° 11.123 E 006° 25.846 and similar formats.

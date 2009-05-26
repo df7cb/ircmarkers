@@ -2,15 +2,16 @@ Source: ircmarkers
 Section: graphics
 Priority: extra
 Maintainer: Christoph Berg <myon@debian.org>
-Build-Depends: debhelper (>= 4.0.0)
-Standards-Version: 3.7.3
-Vcs-Browser: http://svn.df7cb.de/ircmarkers/
+Build-Depends: debhelper (>= 5)
+Standards-Version: 3.8.1
+Vcs-Browser: http://svn.df7cb.de/ircmarkers/trunk/
+Vcs-Svn: http://svn.df7cb.de/ircmarkers/trunk/
 Homepage: http://www.df7cb.de/projects/ircmarkers/
 
 Package: ircmarkers
 Architecture: any
 Depends: libgd-gd2-perl, ${shlibs:Depends}, ${misc:Depends}
-Suggests: gnupg
+Suggests: gnupg, ttf-dejavu-core
 Description: place markers on maps at given coordinates
  IrcMarkers takes a map in .png or .jpg format and a list of coordinates and
  labels in xplanet format and places markers on the map. It was written to

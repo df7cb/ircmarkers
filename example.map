@@ -13,6 +13,9 @@ lon -180/180
 # ...and resize it
 #view_width 200
 
+#font /usr/share/fonts/truetype/ttf-dejavu/DejaVuSansMono.ttf
+#fontsize 8
+
 # we want green labels
 label_color 0 255 0
 

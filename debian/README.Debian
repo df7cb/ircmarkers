@@ -2,6 +2,9 @@ Debian README for ircmarkers
 ============================
 
 This package provides a TrueType font in /usr/share/ircmarkers/fixed_01.ttf.
-Many other fonts are available in the ttf-* packages.
+Many other fonts are available in the ttf-* packages. Note that fixed_01.ttf
+only supports a limited selection of unicode characters. If you are looking for
+a replacement, /usr/share/fonts/truetype/ttf-dejavu/DejaVuSansMono.ttf from
+ttf-dejavu-core is a good choice.
 
- -- Christoph Berg <cb@df7cb.de> Wed Sep  1 20:48:31 CEST 2004
+ -- Christoph Berg <myon@debian.org>  Tue, 26 May 2009 22:50:50 +0200
