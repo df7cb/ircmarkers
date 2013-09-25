@@ -1,3 +1,9 @@
+ircmarkers (0.14-3) unstable; urgency=low
+
+  * Set POD encoding utf8. (Closes: #724087)
+
+ -- Christoph Berg <myon@debian.org>  Wed, 25 Sep 2013 17:28:02 +0200
+
 ircmarkers (0.14-2) unstable; urgency=low
 
   * Suggest ttf-dejavu-core, our fixed_01.ttf doesn't support the more fancy

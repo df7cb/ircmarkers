@@ -192,6 +192,8 @@ if(not $config->{quiet} and defined $config->{min_x}) {
 
 __END__
 
+=encoding utf8
+
 =head1 NAME
 
 B<ircmarkers> - place markers on maps at given coordinates
