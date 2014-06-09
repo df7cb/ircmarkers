@@ -35,7 +35,7 @@ sub parse_coord {
 
 sub new {
 	my $config = { # default values
-		projection => 'mercator',
+		projection => 'square',
 		west => -180,
 		north => 90,
 		east => 180,
@@ -180,7 +180,7 @@ sub parse {
 		$config->{view_width} = $1;
 	} elsif(/^view_height (.+)/) {
 		$config->{view_height} = $1;
-	} elsif(/^projection (mercator|sinusoidal)/) {
+	} elsif(/^projection (square|sinusoidal)/) {
 		$config->{projection} = $1;
 	} elsif(/^center_lon (.+)/) {
 		$config->{center_lon} = $1;

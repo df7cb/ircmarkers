@@ -35,7 +35,7 @@ If you want to use the "map of trust" feature, install GnuPG
 Using IrcMarkers
 ----------------
 
-You need a map in mercator or sinusoidal projection. The IrcMarkers manpage
+You need a map in equirectangular or sinusoidal projection. The IrcMarkers manpage
 contains some pointers. The example.map file contains a short config file to
 get started with.
 

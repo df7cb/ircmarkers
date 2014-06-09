@@ -118,8 +118,8 @@ sub new {
 	} elsif ($config->{projection} eq 'sinusoidal') {
 		die "center_lon must be defined for sinusoidal maps" unless defined $config->{center_lon};
 		# These 2 are not in pixels, but in absolute coordinates. To get pixels, they should be multiplied by $xres.
-		$config->{Xleft} = ($config->{west} - $config->{center_lon}) * cos($config->{north} * $degtorad);
-		$config->{Xright}  = ($config->{east} - $config->{center_lon}) * cos($config->{south} * $degtorad);
+		$config->{Xleft} = ($config->{west} - $config->{center_lon});
+		$config->{Xright}  = ($config->{east} - $config->{center_lon});
 
 		# number of unitary graduation / pixel for x (RESolution)
 		$config->{xres} = ($config->{Xright} - $config->{Xleft}) / $config->{w};
@@ -150,7 +150,7 @@ sub coord2pixel {
 		# absolute X
 		$X0 = ($lon - $config->{center_lon}) * cos($lat * $degtorad);
 		# pixel values
-		$x = sprintf("%d", ($X0 - $config->{Xleft}) / $config->{xres});
+		$x = sprintf("%d", ($X0 - $config->{west}) / $config->{xres});
 		$y = sprintf("%d", ($config->{north} - $lat) / $config->{yres});
 		$vis = 0 if ($X0 < $config->{Xleft} or $X0 > $config->{Xright} or $lat > $config->{north} or $lat < $config->{south});
 	}

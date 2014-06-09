@@ -2,6 +2,7 @@ ircmarkers (0.15-1) UNRELEASED; urgency=medium
 
   * Rename default map projection to square (equirectangular projection),
     mercator projection is really something else.
+  * Fix sinusoidal projection to actually work.
   * Also draw markers where lat is 0.
 
  -- Christoph Berg <myon@debian.org>  Mon, 09 Jun 2014 16:23:06 +0200
