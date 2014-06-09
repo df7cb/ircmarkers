@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# Copyright (C) 2003-2008 Christoph Berg <cb@df7cb.de>
+# Copyright (C) 2003-2014 Christoph Berg <cb@df7cb.de>
 #
 # Part of this file originate from example.pl from the MapMarker distribution:
 #   Author  :  Guillaume Leclanche (Mo-Ize) <mo-ize@nul-en.info>
@@ -20,10 +20,10 @@ use Getopt::Long;
 use IrcMarkers::File;
 use IrcMarkers::Map;
 
-my $VERSION = "0.14";
+my $VERSION = "0.15";
 
 sub VERSION_MESSAGE {
-	print "IrcMarkers $VERSION (C) 2003-2008 Christoph Berg <cb\@df7cb.de>, GNU GPL.\n";
+	print "IrcMarkers $VERSION (C) 2003-2014 Christoph Berg <cb\@df7cb.de>, GNU GPL.\n";
 }
 
 sub HELP_MESSAGE {
@@ -243,7 +243,7 @@ the map.
 =item -x I<west/east>
 
 Declare input map dimensions. Unless specified otherwise in the config file,
-the map is assumed to be in mercator projection. -y specifies the lower/upper
+the map is assumed to be in equirectangular projection. -y specifies the lower/upper
 latitude coordinates, -x the left/right edge longitude. Per default, the map is
 assumed to be a world map (-y -90/90 -x -180/180).
 
@@ -407,11 +407,11 @@ Only show part of the map in the output. Default is to show the whole map.
 
 Size of output map. Default is input map, or size of part selected.
 
-=item projection mercator|sinusoidal
+=item projection square|sinusoidal
 
 =item center_lon I<center>
 
-Map projection. Default is mercator.
+Map projection. Default is square, which selects equirectangular projection.
 center_lon is only used for sinusoidal projection.
 There is no default for center_lon.
 
@@ -578,7 +578,7 @@ The IrcMarkers homepage is at B<http://www.df7cb.de/projects/ircmarkers/>.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2003-2008 Christoph Berg <cb@df7cb.de>
+Copyright (C) 2003-2014 Christoph Berg <cb@df7cb.de>
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software

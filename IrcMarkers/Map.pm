@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2008 Christoph Berg <cb@df7cb.de>
+# Copyright (C) 2004-2014 Christoph Berg <cb@df7cb.de>
 #
 # This file originated from the mapmarkers distribution:
 #
@@ -111,7 +111,7 @@ sub new {
 	}
 
 	# handle projection system
-	if ($config->{projection} eq 'mercator') {
+	if ($config->{projection} eq 'square') {
 		# degree per pixel RESolution
 		$config->{xres} = ($config->{east} - $config->{west}) / $config->{w};
 		$config->{yres} = ($config->{north} - $config->{south}) / $config->{h};
@@ -141,7 +141,7 @@ sub coord2pixel {
 	my($x, $y, $X0);
 	my $vis = 1;
 
-	if ($config->{projection} eq 'mercator') {
+	if ($config->{projection} eq 'square') {
 		# pixel values, sprintf rounds to nearest
 		$x = sprintf("%d", ($lon - $config->{west}) / $config->{xres});
 		$y = sprintf("%d", ($config->{north} - $lat) / $config->{yres});
