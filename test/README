@@ -1,0 +1,13 @@
+Simple test cases for ircmarker projections. To produce output, type "make".
+
+Source:
+
+1920px-Equirectangular-projection.jpg:
+http://de.wikipedia.org/wiki/Plattkarte#mediaviewer/Datei:Equirectangular-projection.jpg
+Public domain; original by NASA (sensor Terra/MODIS)
+
+1920px-Sinusoidal_Projection_11-5-30.jpg:
+http://de.wikipedia.org/wiki/Sinusoidal-Projektion#mediaviewer/Datei:Sinusoidal_Projection_11-5-30.jpg
+Author: Lars H. Rohwedder (User:RokerHRO)
+I, the copyright holder of this work, hereby publish it under the following licenses:
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation License, Version 1.2 or any later version published by the Free Software Foundation; with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.

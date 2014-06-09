@@ -1,0 +1,5 @@
+projection sinusoidal
+# 11°5′30″
+center_lon 11.0916666
+
+#include "test10.map"
