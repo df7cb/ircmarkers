@@ -115,6 +115,10 @@ sub new {
 		# degree per pixel RESolution
 		$config->{xres} = ($config->{east} - $config->{west}) / $config->{w};
 		$config->{yres} = ($config->{north} - $config->{south}) / $config->{h};
+	} elsif ($config->{projection} eq 'mercator') {
+		# degree per pixel RESolution
+		$config->{xres} = ($config->{east} - $config->{west}) / $config->{w};
+		$config->{yres} = ($config->{north} - $config->{south}) / $config->{h};
 	} elsif ($config->{projection} eq 'sinusoidal') {
 		die "center_lon must be defined for sinusoidal maps" unless defined $config->{center_lon};
 		# These 2 are not in pixels, but in absolute coordinates. To get pixels, they should be multiplied by $xres.
@@ -145,6 +149,14 @@ sub coord2pixel {
 		# pixel values, sprintf rounds to nearest
 		$x = sprintf("%d", ($lon - $config->{west}) / $config->{xres});
 		$y = sprintf("%d", ($config->{north} - $lat) / $config->{yres});
+		$vis = 0 if ($lon > $config->{east} or $lon < $config->{west} or $lat > $config->{north} or $lat < $config->{south});
+	} elsif ($config->{projection} eq 'mercator') {
+		$x = sprintf("%d", ($lon - $config->{west}) / $config->{xres});
+		$lat = 89.9 if ($lat == 90);
+		$lat = -89.9 if ($lat == -90);
+		my $yrad = $lat * $degtorad;
+		my $yscaled = 0.5 * log((1 + sin $yrad) / (1 - sin $yrad));
+		$y = sprintf("%d", $config->{h} / 2 - ($yscaled * $radtodeg / $config->{xres}));
 		$vis = 0 if ($lon > $config->{east} or $lon < $config->{west} or $lat > $config->{north} or $lat < $config->{south});
 	} elsif ($config->{projection} eq 'sinusoidal') {
 		# absolute X

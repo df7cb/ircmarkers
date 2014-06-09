@@ -407,7 +407,7 @@ Only show part of the map in the output. Default is to show the whole map.
 
 Size of output map. Default is input map, or size of part selected.
 
-=item projection square|sinusoidal
+=item projection square|mercator|sinusoidal
 
 =item center_lon I<center>
 

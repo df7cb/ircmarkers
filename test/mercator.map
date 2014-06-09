@@ -1,0 +1,4 @@
+projection mercator
+lat -85/85
+
+#include "test10.map"

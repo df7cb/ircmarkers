@@ -180,7 +180,7 @@ sub parse {
 		$config->{view_width} = $1;
 	} elsif(/^view_height (.+)/) {
 		$config->{view_height} = $1;
-	} elsif(/^projection (square|sinusoidal)/) {
+	} elsif(/^projection (square|mercator|sinusoidal)/) {
 		$config->{projection} = $1;
 	} elsif(/^center_lon (.+)/) {
 		$config->{center_lon} = $1;
