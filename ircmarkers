@@ -111,7 +111,7 @@ die "no output map" unless $config->{write};
 my $map = IrcMarkers::Map->new($config);
 
 foreach my $marker (@{$config->{markers}}) {
-	next unless $marker->{lat};
+	next unless defined $marker->{lat};
 	($marker->{x}, $marker->{y}, $marker->{visible}) = $config->coord2pixel($marker->{lat}, $marker->{lon});
 	next unless $marker->{visible};
 	if ($marker->{text} ne "") {

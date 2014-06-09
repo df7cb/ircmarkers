@@ -1,3 +1,9 @@
+ircmarkers (0.15-1) UNRELEASED; urgency=medium
+
+  * Also draw markers where lat is 0.
+
+ -- Christoph Berg <myon@debian.org>  Mon, 09 Jun 2014 16:23:06 +0200
+
 ircmarkers (0.14-3) unstable; urgency=low
 
   * Set POD encoding utf8. (Closes: #724087)
