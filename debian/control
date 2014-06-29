@@ -2,8 +2,8 @@ Source: ircmarkers
 Section: graphics
 Priority: extra
 Maintainer: Christoph Berg <myon@debian.org>
-Build-Depends: debhelper (>= 5)
-Standards-Version: 3.8.1
+Build-Depends: debhelper (>= 9)
+Standards-Version: 3.9.5
 Vcs-Browser: http://svn.df7cb.de/ircmarkers/trunk/
 Vcs-Svn: http://svn.df7cb.de/ircmarkers/trunk/
 Homepage: http://www.df7cb.de/projects/ircmarkers/
