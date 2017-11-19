@@ -4,9 +4,9 @@ Priority: extra
 Maintainer: Christoph Berg <myon@debian.org>
 Build-Depends: debhelper (>= 9)
 Standards-Version: 3.9.5
-Vcs-Browser: http://svn.df7cb.de/ircmarkers/trunk/
-Vcs-Svn: http://svn.df7cb.de/ircmarkers/trunk/
-Homepage: http://www.df7cb.de/projects/ircmarkers/
+Vcs-Browser: https://github.com/ChristophBerg/ircmarkers
+Vcs-Git: https://github.com/ChristophBerg/ircmarkers.git
+Homepage: https://www.df7cb.de/projects/ircmarkers/
 
 Package: ircmarkers
 Architecture: any
