@@ -1,9 +1,9 @@
 Source: ircmarkers
 Section: graphics
-Priority: extra
+Priority: optional
 Maintainer: Christoph Berg <myon@debian.org>
-Build-Depends: debhelper (>= 9)
-Standards-Version: 3.9.5
+Build-Depends: debhelper (>= 11)
+Standards-Version: 4.1.4
 Vcs-Browser: https://github.com/ChristophBerg/ircmarkers
 Vcs-Git: https://github.com/ChristophBerg/ircmarkers.git
 Homepage: https://www.df7cb.de/projects/ircmarkers/

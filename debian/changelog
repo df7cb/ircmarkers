@@ -1,3 +1,9 @@
+ircmarkers (0.15-2) unstable; urgency=medium
+
+  * Bump to compat 11.
+
+ -- Christoph Berg <myon@debian.org>  Sat, 19 May 2018 16:28:27 +0200
+
 ircmarkers (0.15-1) unstable; urgency=medium
 
   * Rename default map projection to square (equirectangular projection),
