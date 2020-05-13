@@ -1,3 +1,11 @@
+ircmarkers (0.15-3) UNRELEASED; urgency=medium
+
+  * Trim trailing whitespace.
+  * Bump debhelper from old 11 to 12.
+  * Set debhelper-compat version in Build-Depends.
+
+ -- Debian Janitor <janitor@jelmer.uk>  Tue, 28 Apr 2020 18:26:40 +0000
+
 ircmarkers (0.15-2) unstable; urgency=medium
 
   * Bump to compat 11.
@@ -161,4 +169,3 @@ ircmarkers (0.1) unstable; urgency=low
   * Initial Release.
 
  -- Christoph Berg <cb@df7cb.de>  Sat, 10 Jul 2004 18:56:37 +0200
-
