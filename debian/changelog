@@ -1,14 +1,14 @@
-ircmarkers (0.15-3) UNRELEASED; urgency=medium
+ircmarkers (0.15-3) unstable; urgency=medium
 
   [ Debian Janitor ]
   * Trim trailing whitespace.
-  * Bump debhelper from old 11 to 12.
+  * Bump debhelper from old 11 to 13.
   * Set debhelper-compat version in Build-Depends.
 
   [ Christoph Berg ]
   * Update Git URLs.
 
- -- Debian Janitor <janitor@jelmer.uk>  Tue, 28 Apr 2020 18:26:40 +0000
+ -- Christoph Berg <myon@debian.org>  Tue, 31 Aug 2021 16:49:05 +0200
 
 ircmarkers (0.15-2) unstable; urgency=medium
 
