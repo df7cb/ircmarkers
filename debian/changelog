@@ -2,6 +2,7 @@ ircmarkers (0.16-1) unstable; urgency=medium
 
   * Make Makefile crossbuild-compatible. Thanks to Helmut Grohne for the
     patch! (Closes: #993456)
+  * debian/watch: Get release tarballs from GitHub.
 
  -- Christoph Berg <myon@debian.org>  Tue, 24 Oct 2023 14:58:23 +0200
 

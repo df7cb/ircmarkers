@@ -1,2 +1,2 @@
 version=4
-http://www.df7cb.de/projects/ircmarkers/packages/ircmarkers_([0-9.-]*)(?:.orig)?.tar.gz
+https://github.com/df7cb/ircmarkers/tags .*/(.*)-1.tar.gz
