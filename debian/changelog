@@ -1,3 +1,9 @@
+ircmarkers (0.17-1) unstable; urgency=medium
+
+  * Use standard compiler flags. (Closes: #1119453)
+
+ -- Christoph Berg <myon@debian.org>  Fri, 07 Nov 2025 11:27:07 +0100
+
 ircmarkers (0.16-1) unstable; urgency=medium
 
   * Make Makefile crossbuild-compatible. Thanks to Helmut Grohne for the
