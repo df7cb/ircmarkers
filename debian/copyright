@@ -72,3 +72,5 @@ The test directory contains some maps:
   document under the terms of the GNU Free Documentation License, Version 1.2
   or any later version published by the Free Software Foundation; with no
   Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
+
+  On Debian, the GFDL 1.2 is located in /usr/share/common-licenses/GFDL-1.2.
