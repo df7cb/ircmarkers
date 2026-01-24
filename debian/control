@@ -3,15 +3,15 @@ Section: graphics
 Priority: optional
 Maintainer: Christoph Berg <myon@debian.org>
 Build-Depends: debhelper-compat (= 13)
-Standards-Version: 4.6.0
+Standards-Version: 4.7.2
 Vcs-Browser: https://github.com/df7cb/ircmarkers
 Vcs-Git: https://github.com/df7cb/ircmarkers.git
 Homepage: https://www.df7cb.de/projects/ircmarkers/
 
 Package: ircmarkers
 Architecture: any
-Depends: libgd-gd2-perl, ${shlibs:Depends}, ${misc:Depends}
-Suggests: gnupg, ttf-dejavu-core
+Depends: libgd-perl, ${shlibs:Depends}, ${misc:Depends}
+Suggests: gnupg
 Description: place markers on maps at given coordinates
  IrcMarkers takes a map in .png or .jpg format and a list of coordinates and
  labels in xplanet format and places markers on the map. It was written to
